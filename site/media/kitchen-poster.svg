@@ -1,0 +1,12 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='1600' height='900' viewBox='0 0 1600 900'>
+  <defs>
+    <linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>
+      <stop offset='0' stop-color='#15110e'/>
+      <stop offset='1' stop-color='#b88954'/>
+    </linearGradient>
+  </defs>
+  <rect width='1600' height='900' fill='url(#g)'/>
+  <rect width='1600' height='900' fill='rgba(0,0,0,0.35)'/>
+  <text x='80' y='140' fill='#F6EFE6' font-family='Cormorant Garamond, serif' font-size='68' letter-spacing='3'>Chef Studio</text>
+  <text x='80' y='210' fill='#C7B9AB' font-family='Manrope, sans-serif' font-size='26' letter-spacing='6'>BEHIND THE PASS</text>
+</svg>
