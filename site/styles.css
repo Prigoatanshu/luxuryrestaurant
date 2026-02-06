@@ -1,17 +1,17 @@
 :root {
   --bg: #0b0f14;
   --bg-alt: #10151c;
-  --panel: #141b23;
-  --panel-light: #1b2430;
+  --panel: #151d26;
+  --panel-light: #1d2733;
   --accent: #d8b46a;
   --accent-2: #3fb6b2;
   --text: #f5f2ec;
   --muted: #b8b0a2;
-  --border: rgba(255, 255, 255, 0.08);
-  --shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
-  --radius-lg: 28px;
-  --radius-md: 20px;
-  --radius-sm: 14px;
+  --border: rgba(255, 255, 255, 0.06);
+  --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  --radius-lg: 34px;
+  --radius-md: 26px;
+  --radius-sm: 18px;
 }
 
 * {
@@ -113,7 +113,7 @@ p {
 }
 
 .topbar {
-  background: rgba(10, 13, 18, 0.9);
+  background: rgba(10, 13, 18, 0.6);
   border-bottom: 1px solid var(--border);
   font-size: 0.75rem;
   letter-spacing: 0.15em;
@@ -132,9 +132,9 @@ p {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: rgba(11, 15, 20, 0.92);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
+  background: rgba(11, 15, 20, 0.35);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .nav {
