@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Sora:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -41,47 +41,47 @@
     </header>
 
     <main>
-      <section class="hero" id="experience">
-        <video
-          class="hero__video"
-          autoplay
-          muted
-          loop
-          playsinline
-          preload="metadata"
-          poster="assets/images/dish-01.jpg"
-        >
-          <source
-            src="assets/videos/hero.mp4"
-            type="video/mp4"
-          />
-        </video>
-        <div class="hero__overlay"></div>
-        <div class="container hero__content" data-reveal>
-          <p class="eyebrow">The Art of Modern Indian Dining</p>
-          <h1>Every course is a story told through spice, smoke, and fire.</h1>
-          <p class="lead">
-            Luxurydine is a celebration of bold flavor and refined hospitality. From
-            our open-kitchen atelier to the candlelit lounge, every detail is curated
-            for an unforgettable evening.
-          </p>
-          <div class="hero__cta">
-            <a class="btn btn--solid" href="#reserve">Reserve on OpenTable</a>
-            <a class="btn btn--ghost" href="#menu">View Menu</a>
+            <section class="hero" id="experience">
+        <div class="container hero__grid">
+          <div class="hero__text" data-reveal>
+            <p class="eyebrow">Dinner in Motion</p>
+            <h1>Seasonal plates, slow rituals, luminous nights.</h1>
+            <p class="lead">
+              Luxurydine is a modern dining studio where fire, smoke, and spice
+              are choreographed into a multi-course experience.
+            </p>
+            <div class="hero__cta">
+              <a class="btn btn--solid" href="#reserve">Reserve on OpenTable</a>
+              <a class="btn btn--ghost" href="#menu">Explore Menu</a>
+            </div>
+            <div class="hero__stats">
+              <div class="stat">
+                <span class="stat__value">30+</span>
+                <span class="stat__label">Seasonal menus crafted yearly</span>
+              </div>
+              <div class="stat">
+                <span class="stat__value">180</span>
+                <span class="stat__label">Seats across three immersive rooms</span>
+              </div>
+              <div class="stat">
+                <span class="stat__value">4</span>
+                <span class="stat__label">Guided tasting journeys</span>
+              </div>
+            </div>
           </div>
-          <div class="hero__stats">
-            <div class="stat">
-              <span class="stat__value">30+</span>
-              <span class="stat__label">Years of culinary craft</span>
-            </div>
-            <div class="stat">
-              <span class="stat__value">180</span>
-              <span class="stat__label">Seats across three rooms</span>
-            </div>
-            <div class="stat">
-              <span class="stat__value">4</span>
-              <span class="stat__label">Signature tasting journeys</span>
-            </div>
+          <div class="hero__media" data-reveal>
+            <video
+              class="hero__video"
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="metadata"
+              poster="assets/images/dish-01.jpg"
+            >
+              <source src="assets/videos/hero.mp4" type="video/mp4" />
+            </video>
+            <div class="hero__media-caption">Live from the open-fire kitchen</div>
           </div>
         </div>
       </section>
@@ -558,6 +558,8 @@
     </footer>
   </body>
 </html>
+
+
 
 
 
