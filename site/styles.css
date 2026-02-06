@@ -567,6 +567,14 @@ p {
 }
 
 @media (max-width: 900px) {
+  .topbar {
+    display: none;
+  }
+
+  .site-header {
+    position: static;
+  }
+
   .nav {
     flex-wrap: wrap;
     align-items: flex-start;
