@@ -1,0 +1,286 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Luxurydine Admin Panel</title>
+    <style>
+      :root {
+        --bg: #0f1115;
+        --panel: #1a1f26;
+        --text: #f6f3ed;
+        --muted: #b8b1a4;
+        --accent: #d2a65a;
+        --success: #1d5f3a;
+        --error: #6b2323;
+        --border: rgba(255, 255, 255, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Manrope, Arial, sans-serif;
+        color: var(--text);
+        background: #0f1115;
+      }
+
+      .header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(15, 17, 21, 0.95);
+      }
+
+      .header a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 700;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 16px;
+        padding: 16px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px;
+      }
+
+      h2 {
+        margin: 0 0 8px;
+        font-size: 1.05rem;
+      }
+
+      p {
+        margin: 0 0 10px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 520px;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #121723;
+        color: var(--text);
+        font-family: Consolas, Monaco, monospace;
+        font-size: 0.84rem;
+      }
+
+      button {
+        border: none;
+        border-radius: 10px;
+        padding: 9px 12px;
+        background: var(--accent);
+        color: #1b150c;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .flash {
+        margin: 10px 0;
+        padding: 10px;
+        border-radius: 10px;
+        font-size: 0.9rem;
+      }
+
+      .flash.success {
+        background: var(--success);
+      }
+
+      .flash.error {
+        background: var(--error);
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 8px;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--muted);
+        font-weight: 600;
+      }
+
+      select {
+        padding: 6px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #121723;
+        color: var(--text);
+      }
+
+      .status-form {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .status-form button {
+        padding: 6px 8px;
+        font-size: 0.78rem;
+      }
+
+      @media (max-width: 1100px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        textarea {
+          min-height: 360px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="header">
+      <strong>Luxurydine Admin</strong>
+      <a href="{{ url_for('admin_logout') }}">Logout</a>
+    </header>
+
+    <main class="layout">
+      <section class="panel">
+        <h2>Website Content JSON</h2>
+        <p>Edit menu names/prices, hero text, contact info, hours, and more in one place.</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="post" action="{{ url_for('admin_update_content') }}">
+          <textarea name="content_json" spellcheck="false" required>{{ content_json }}</textarea>
+          <div style="margin-top: 10px; display: flex; gap: 8px;">
+            <button type="submit">Save Content</button>
+          </div>
+        </form>
+      </section>
+
+      <section>
+        <div class="panel" style="margin-bottom: 16px;">
+          <h2>Reservations (Latest 200)</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Guest</th>
+                  <th>Date/Time</th>
+                  <th>Guests</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in reservations %}
+                  <tr>
+                    <td>#{{ row['id'] }}</td>
+                    <td>
+                      <strong>{{ row['full_name'] }}</strong><br />
+                      {{ row['phone'] }}<br />
+                      {{ row['email'] }}
+                    </td>
+                    <td>
+                      {{ row['reservation_date'] }}<br />
+                      {{ row['reservation_time'] }}
+                    </td>
+                    <td>{{ row['guests'] }}</td>
+                    <td>
+                      <form class="status-form" method="post" action="{{ url_for('admin_update_reservation_status', reservation_id=row['id']) }}">
+                        <select name="status">
+                          {% for status in ['new', 'confirmed', 'completed', 'cancelled'] %}
+                            <option value="{{ status }}" {% if row['status'] == status %}selected{% endif %}>{{ status }}</option>
+                          {% endfor %}
+                        </select>
+                        <button type="submit">Update</button>
+                      </form>
+                    </td>
+                  </tr>
+                {% else %}
+                  <tr>
+                    <td colspan="5">No reservations yet.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>Orders (Latest 200)</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Customer</th>
+                  <th>Pickup</th>
+                  <th>Details</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in orders %}
+                  <tr>
+                    <td>#{{ row['id'] }}</td>
+                    <td>
+                      <strong>{{ row['full_name'] }}</strong><br />
+                      {{ row['phone'] }}<br />
+                      {{ row['email'] }}
+                    </td>
+                    <td>{{ row['pickup_time'] }}</td>
+                    <td>{{ row['order_details'] }}</td>
+                    <td>
+                      <form class="status-form" method="post" action="{{ url_for('admin_update_order_status', order_id=row['id']) }}">
+                        <select name="status">
+                          {% for status in ['new', 'accepted', 'preparing', 'ready', 'completed', 'cancelled'] %}
+                            <option value="{{ status }}" {% if row['status'] == status %}selected{% endif %}>{{ status }}</option>
+                          {% endfor %}
+                        </select>
+                        <button type="submit">Update</button>
+                      </form>
+                    </td>
+                  </tr>
+                {% else %}
+                  <tr>
+                    <td colspan="5">No orders yet.</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

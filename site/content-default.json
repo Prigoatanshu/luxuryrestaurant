@@ -1,0 +1,153 @@
+﻿{
+  "brand": {
+    "name": "Luxurydine",
+    "email": "info@luxurydine.com",
+    "phone": "(416) 555-0140",
+    "address": "1248 St Clair Ave W, Toronto, ON"
+  },
+  "hero": {
+    "eyebrow": "Dinner in Motion",
+    "title": "Seasonal plates, slow rituals, luminous nights.",
+    "description": "Luxurydine is a modern dining studio where fire, smoke, and spice are choreographed into a multi-course experience.",
+    "video": "assets/videos/hero.mp4",
+    "poster": "assets/images/dish-01.jpg",
+    "caption": "Live from the open-fire kitchen",
+    "stats": [
+      {
+        "value": "30+",
+        "label": "Seasonal menus crafted yearly"
+      },
+      {
+        "value": "180",
+        "label": "Seats across three immersive rooms"
+      },
+      {
+        "value": "4",
+        "label": "Guided tasting journeys"
+      }
+    ]
+  },
+  "about": {
+    "eyebrow": "Winterlicious 2026 Partner",
+    "title": "Inspired by heritage, perfected for the present.",
+    "description": "We blend time-honored techniques with contemporary plating, drawing from the diverse regions of India. Expect fragrant biryanis, live-fire tandoor cooking, and a cocktail program that layers spice with craft.",
+    "image": "assets/images/dish-02.jpg",
+    "badge": "Chef's Table"
+  },
+  "menu": {
+    "eyebrow": "Menu Highlights",
+    "title": "Ten signature dishes, plated with intention.",
+    "items": [
+      {
+        "name": "Saffron Royale Biryani",
+        "description": "Fragrant basmati, browned onions, toasted cashew.",
+        "tag": "Signature",
+        "price": "$32",
+        "image": "assets/images/dish-01.jpg",
+        "alt": "Saffron biryani"
+      },
+      {
+        "name": "Royal Butter Chicken",
+        "description": "Tomato kasoori gravy, smoked cream, fenugreek.",
+        "tag": "Classic",
+        "price": "$28",
+        "image": "assets/images/dish-02.jpg",
+        "alt": "Butter chicken"
+      },
+      {
+        "name": "Smoked Paneer Makhani",
+        "description": "Charred paneer, tomato butter, chili oil.",
+        "tag": "Vegetarian",
+        "price": "$24",
+        "image": "assets/images/dish-03.jpg",
+        "alt": "Paneer butter masala"
+      },
+      {
+        "name": "Caviar Pani Puri",
+        "description": "Tamarind water, whipped yogurt, oscietra pearls.",
+        "tag": "Chef's Pick",
+        "price": "$21",
+        "image": "assets/images/dish-04.jpg",
+        "alt": "Pani puri"
+      },
+      {
+        "name": "Kerala Prawn Curry",
+        "description": "Coconut milk, curry leaf, mustard seed tempering.",
+        "tag": "Seafood",
+        "price": "$34",
+        "image": "assets/images/dish-05.jpg",
+        "alt": "Prawn curry"
+      },
+      {
+        "name": "Charred Tandoori Lamb",
+        "description": "Black garlic, pomegranate glaze, mint yogurt.",
+        "tag": "Fire & Smoke",
+        "price": "$36",
+        "image": "assets/images/dish-06.jpg",
+        "alt": "Tandoori lamb"
+      },
+      {
+        "name": "Dal Dhungar",
+        "description": "Slow-cooked lentils, ghee smoke, crisp shallots.",
+        "tag": "Vegetarian",
+        "price": "$22",
+        "image": "assets/images/dish-07.jpg",
+        "alt": "Dal"
+      },
+      {
+        "name": "Malai Kofta",
+        "description": "Cashew cream, saffron gravy, gilded nuts.",
+        "tag": "Signature",
+        "price": "$26",
+        "image": "assets/images/dish-08.jpg",
+        "alt": "Malai kofta"
+      },
+      {
+        "name": "Rose Cardamom Pavlova",
+        "description": "Berry compote, pistachio dust, rose syrup.",
+        "tag": "Dessert",
+        "price": "$16",
+        "image": "assets/images/dish-09.jpg",
+        "alt": "Pavlova"
+      },
+      {
+        "name": "Mango Phirni",
+        "description": "Chilled rice pudding, saffron milk, almond.",
+        "tag": "Dessert",
+        "price": "$15",
+        "image": "assets/images/dish-10.jpg",
+        "alt": "Mango phirni"
+      }
+    ]
+  },
+  "videos": [
+    {
+      "title": "Chef's Table Service",
+      "description": "Front-row seats to the finishing touches.",
+      "video": "assets/videos/hero.mp4",
+      "poster": "assets/images/dish-05.jpg"
+    },
+    {
+      "title": "Golden Hour Lounge",
+      "description": "Crafted cocktails with a light bite pairing.",
+      "video": "assets/videos/lounge.mp4",
+      "poster": "assets/images/dish-08.jpg"
+    }
+  ],
+  "booking": {
+    "title": "Let us host your evening.",
+    "description": "Share your occasion and preferences. Our team will confirm shortly."
+  },
+  "ordering": {
+    "title": "Place a pickup order",
+    "description": "Send your order request and we will call or email to confirm total and pickup slot."
+  },
+  "footer": {
+    "tagline": "Modern Indian cuisine with candlelit elegance.",
+    "hours": [
+      "Mon-Thu: 5:00 PM - 10:00 PM",
+      "Fri-Sun: 4:00 PM - 11:00 PM"
+    ],
+    "social": "Instagram | Facebook | TikTok"
+  }
+}

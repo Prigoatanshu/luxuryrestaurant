@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -15,15 +15,15 @@
   <body>
     <div class="topbar">
       <div class="container topbar__content">
-        <span>info@luxurydine.com</span>
-        <span>1248 St Clair Ave W, Toronto, ON</span>
-        <span>(416) 555-0140</span>
+        <span id="topbar-email">info@luxurydine.com</span>
+        <span id="topbar-address">1248 St Clair Ave W, Toronto, ON</span>
+        <span id="topbar-phone">(416) 555-0140</span>
       </div>
     </div>
 
     <header class="site-header">
       <div class="container nav">
-        <a class="logo" href="#">Luxurydine</a>
+        <a class="logo" href="#" id="brand-name">Luxurydine</a>
         <input class="nav__toggle" type="checkbox" id="nav-toggle" />
         <label class="nav__toggle-btn" for="nav-toggle" aria-label="Toggle menu">
           <span class="nav__dots"></span>
@@ -31,47 +31,34 @@
         <nav class="nav__links" aria-label="Primary">
           <a href="#experience">The Experience</a>
           <a href="#menu">Menu</a>
-          <a href="#stories">Stories</a>
           <a href="#inside">Inside Luxurydine</a>
-          <a href="#discover">Discover More</a>
-          <a href="#contact">Reach Out</a>
+          <a href="#reserve">Reservations</a>
+          <a href="#order">Pickup Order</a>
+          <a href="#contact">Contact</a>
         </nav>
         <a class="btn btn--solid" href="#reserve">Book a Table</a>
       </div>
     </header>
 
     <main>
-            <section class="hero" id="experience">
+      <section class="hero" id="experience">
         <div class="container hero__grid">
-          <div class="hero__text" data-reveal>
-            <p class="eyebrow">Dinner in Motion</p>
-            <h1>Seasonal plates, slow rituals, luminous nights.</h1>
-            <p class="lead">
-              Luxurydine is a modern dining studio where fire, smoke, and spice
-              are choreographed into a multi-course experience.
+          <div class="hero__text">
+            <p class="eyebrow" id="hero-eyebrow">Dinner in Motion</p>
+            <h1 id="hero-title">Seasonal plates, slow rituals, luminous nights.</h1>
+            <p class="lead" id="hero-description">
+              Luxurydine is a modern dining studio where fire, smoke, and spice are choreographed into a multi-course experience.
             </p>
             <div class="hero__cta">
-              <a class="btn btn--solid" href="#reserve">Reserve on OpenTable</a>
+              <a class="btn btn--solid" href="#reserve">Reserve</a>
               <a class="btn btn--ghost" href="#menu">Explore Menu</a>
             </div>
-            <div class="hero__stats">
-              <div class="stat">
-                <span class="stat__value">30+</span>
-                <span class="stat__label">Seasonal menus crafted yearly</span>
-              </div>
-              <div class="stat">
-                <span class="stat__value">180</span>
-                <span class="stat__label">Seats across three immersive rooms</span>
-              </div>
-              <div class="stat">
-                <span class="stat__value">4</span>
-                <span class="stat__label">Guided tasting journeys</span>
-              </div>
-            </div>
+            <div class="hero__stats" id="hero-stats"></div>
           </div>
-          <div class="hero__media" data-reveal>
+          <div class="hero__media">
             <video
               class="hero__video"
+              id="hero-video"
               autoplay
               muted
               loop
@@ -79,451 +66,134 @@
               preload="metadata"
               poster="assets/images/dish-01.jpg"
             >
-              <source src="assets/videos/hero.mp4" type="video/mp4" />
+              <source id="hero-video-source" src="assets/videos/hero.mp4" type="video/mp4" />
             </video>
-            <div class="hero__media-caption">Live from the open-fire kitchen</div>
+            <div class="hero__media-caption" id="hero-caption">Live from the open-fire kitchen</div>
           </div>
         </div>
       </section>
 
       <section class="about" id="stories">
         <div class="container about__grid">
-          <div class="about__text" data-reveal>
-            <p class="eyebrow">Winterlicious 2026 Partner</p>
-            <h2>Inspired by heritage, perfected for the present.</h2>
-            <p>
-              We blend time-honored techniques with contemporary plating, drawing
-              from the diverse regions of India. Expect fragrant biryanis, live-fire
-              tandoor cooking, and a cocktail program that layers spice with craft.
+          <div class="about__text">
+            <p class="eyebrow" id="about-eyebrow">Winterlicious 2026 Partner</p>
+            <h2 id="about-title">Inspired by heritage, perfected for the present.</h2>
+            <p id="about-description">
+              We blend time-honored techniques with contemporary plating, drawing from the diverse regions of India.
             </p>
-            <div class="about__highlights">
-              <div>
-                <h3>Open Kitchen Atelier</h3>
-                <p>Watch the tandoor and flame grill in action.</p>
-              </div>
-              <div>
-                <h3>Private Dining</h3>
-                <p>Intimate chef's table experiences for 8-18 guests.</p>
-              </div>
-              <div>
-                <h3>Curated Pairings</h3>
-                <p>Sommelier-led matches from Old World to India.</p>
-              </div>
-            </div>
           </div>
-          <div class="about__media" data-reveal>
-            <img
-              src="assets/images/dish-02.jpg"
-              alt="Butter chicken in a black bowl"
-              loading="lazy"
-            />
-            <div class="about__badge">Chef's Table</div>
-          </div>
-        </div>
-      </section>
-
-      <section class="feature" id="discover">
-        <div class="container feature__grid">
-          <div class="feature__card" data-reveal>
-            <p class="eyebrow">The Lounge</p>
-            <h3>Golden hour cocktails</h3>
-            <p>House infusions, smoky garnishes, and sparkling service.</p>
-          </div>
-          <div class="feature__card" data-reveal>
-            <p class="eyebrow">The Dining Room</p>
-            <h3>Velvet & candlelight</h3>
-            <p>Warm textures, soft music, and the glow of the tandoor.</p>
-          </div>
-          <div class="feature__card" data-reveal>
-            <p class="eyebrow">The Gallery</p>
-            <h3>Seasonal art walls</h3>
-            <p>Rotating exhibits by local Toronto artists.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="categories">
-        <div class="container">
-          <div class="section__heading" data-reveal>
-            <p class="eyebrow">Our Main Dishes</p>
-            <h2>Four paths through the Luxurydine experience</h2>
-          </div>
-          <div class="categories__grid">
-            <article class="category" data-reveal>
-              <h3>Heritage Starters</h3>
-              <p>House-made chutneys, crisp textures, bright spice.</p>
-            </article>
-            <article class="category" data-reveal>
-              <h3>Fire & Smoke</h3>
-              <p>Tandoor-forward mains finished with clarified butter.</p>
-            </article>
-            <article class="category" data-reveal>
-              <h3>Vegetarian Atelier</h3>
-              <p>Seasonal produce with decadent sauces and grains.</p>
-            </article>
-            <article class="category" data-reveal>
-              <h3>Sweet Finish</h3>
-              <p>Fragrant desserts with rose, cardamom, and saffron.</p>
-            </article>
+          <div class="about__media">
+            <img id="about-image" src="assets/images/dish-02.jpg" alt="Signature dish" loading="lazy" />
+            <div class="about__badge" id="about-badge">Chef's Table</div>
           </div>
         </div>
       </section>
 
       <section class="menu" id="menu">
         <div class="container">
-          <div class="section__heading" data-reveal>
-            <p class="eyebrow">Menu Highlights</p>
-            <h2>Ten signature dishes, plated with intention.</h2>
+          <div class="section__heading">
+            <p class="eyebrow" id="menu-eyebrow">Menu Highlights</p>
+            <h2 id="menu-title">Ten signature dishes, plated with intention.</h2>
           </div>
-          <div class="menu__grid">
-            <article class="menu__card" data-reveal>
-              <img
-                src="assets/images/dish-01.jpg"
-                alt="Saffron biryani"
-                loading="lazy"
-              />
-              <div class="menu__content">
-                <h3>Saffron Royale Biryani</h3>
-                <p>Fragrant basmati, browned onions, toasted cashew.</p>
-                <div class="menu__meta">
-                  <span class="tag">Signature</span>
-                  <span class="price">$32</span>
-                </div>
-              </div>
-            </article>
-            <article class="menu__card" data-reveal>
-              <img
-                src="assets/images/dish-02.jpg"
-                alt="Butter chicken"
-                loading="lazy"
-              />
-              <div class="menu__content">
-                <h3>Royal Butter Chicken</h3>
-                <p>Tomato kasoori gravy, smoked cream, fenugreek.</p>
-                <div class="menu__meta">
-                  <span class="tag">Classic</span>
-                  <span class="price">$28</span>
-                </div>
-              </div>
-            </article>
-            <article class="menu__card" data-reveal>
-              <img
-                src="assets/images/dish-03.jpg"
-                alt="Paneer butter masala"
-                loading="lazy"
-              />
-              <div class="menu__content">
-                <h3>Smoked Paneer Makhani</h3>
-                <p>Charred paneer, tomato butter, chili oil.</p>
-                <div class="menu__meta">
-                  <span class="tag">Vegetarian</span>
-                  <span class="price">$24</span>
-                </div>
-              </div>
-            </article>
-            <article class="menu__card" data-reveal>
-              <img
-                src="assets/images/dish-04.jpg"
-                alt="Panipuri"
-                loading="lazy"
-              />
-              <div class="menu__content">
-                <h3>Caviar Pani Puri</h3>
-                <p>Tamarind water, whipped yogurt, oscietra pearls.</p>
-                <div class="menu__meta">
-                  <span class="tag">Chef's Pick</span>
-                  <span class="price">$21</span>
-                </div>
-              </div>
-            </article>
-            <article class="menu__card" data-reveal>
-              <img
-                src="assets/images/dish-05.jpg"
-                alt="Prawn curry"
-                loading="lazy"
-              />
-              <div class="menu__content">
-                <h3>Kerala Prawn Curry</h3>
-                <p>Coconut milk, curry leaf, mustard seed tempering.</p>
-                <div class="menu__meta">
-                  <span class="tag">Seafood</span>
-                  <span class="price">$34</span>
-                </div>
-              </div>
-            </article>
-            <article class="menu__card" data-reveal>
-              <img
-                src="assets/images/dish-06.jpg"
-                alt="Tandoori lamb"
-                loading="lazy"
-              />
-              <div class="menu__content">
-                <h3>Charred Tandoori Lamb</h3>
-                <p>Black garlic, pomegranate glaze, mint yogurt.</p>
-                <div class="menu__meta">
-                  <span class="tag">Fire & Smoke</span>
-                  <span class="price">$36</span>
-                </div>
-              </div>
-            </article>
-            <article class="menu__card" data-reveal>
-              <img
-                src="assets/images/dish-07.jpg"
-                alt="Dal with herbs"
-                loading="lazy"
-              />
-              <div class="menu__content">
-                <h3>Dal Dhungar</h3>
-                <p>Slow-cooked lentils, ghee smoke, crisp shallots.</p>
-                <div class="menu__meta">
-                  <span class="tag">Vegetarian</span>
-                  <span class="price">$22</span>
-                </div>
-              </div>
-            </article>
-            <article class="menu__card" data-reveal>
-              <img
-                src="assets/images/dish-08.jpg"
-                alt="Malai kofta"
-                loading="lazy"
-              />
-              <div class="menu__content">
-                <h3>Malai Kofta</h3>
-                <p>Cashew cream, saffron gravy, gilded nuts.</p>
-                <div class="menu__meta">
-                  <span class="tag">Signature</span>
-                  <span class="price">$26</span>
-                </div>
-              </div>
-            </article>
-            <article class="menu__card" data-reveal>
-              <img
-                src="assets/images/dish-09.jpg"
-                alt="Rose dessert"
-                loading="lazy"
-              />
-              <div class="menu__content">
-                <h3>Rose Cardamom Pavlova</h3>
-                <p>Berry compote, pistachio dust, rose syrup.</p>
-                <div class="menu__meta">
-                  <span class="tag">Dessert</span>
-                  <span class="price">$16</span>
-                </div>
-              </div>
-            </article>
-            <article class="menu__card" data-reveal>
-              <img
-                src="assets/images/dish-10.jpg"
-                alt="Mango phirni"
-                loading="lazy"
-              />
-              <div class="menu__content">
-                <h3>Mango Phirni</h3>
-                <p>Chilled rice pudding, saffron milk, almond.</p>
-                <div class="menu__meta">
-                  <span class="tag">Dessert</span>
-                  <span class="price">$15</span>
-                </div>
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section class="signature">
-        <div class="container signature__grid">
-          <div class="signature__media" data-reveal>
-            <img
-              src="assets/images/dish-03.jpg"
-              alt="Paneer butter masala"
-              loading="lazy"
-            />
-          </div>
-          <div class="signature__content" data-reveal>
-            <p class="eyebrow">Best Seller</p>
-            <h2>Chef's seasonal tasting journey.</h2>
-            <p>
-              Seven courses inspired by the spice markets of Jaipur, the coast of
-              Kerala, and the flavors of modern Toronto.
-            </p>
-            <ul class="signature__list">
-              <li>Amuse bouche with smoked yogurt and heirloom beet</li>
-              <li>Tandoor scallop with mango kosho</li>
-              <li>Heritage goat curry with saffron naan</li>
-              <li>Rose water granita with pistachio dust</li>
-            </ul>
-            <a class="btn btn--solid" href="#reserve">Book the tasting</a>
-          </div>
+          <div class="menu__grid" id="menu-grid"></div>
         </div>
       </section>
 
       <section class="videos" id="inside">
         <div class="container">
-          <div class="section__heading" data-reveal>
+          <div class="section__heading">
             <p class="eyebrow">Inside Luxurydine</p>
             <h2>Chef, fire, and the ritual of plating.</h2>
           </div>
-          <div class="videos__grid">
-            <div class="video-card" data-reveal>
-              <video
-                controls
-                playsinline
-                preload="metadata"
-                poster="assets/images/dish-05.jpg"
-              >
-                <source
-                  src="assets/videos/hero.mp4"
-                  type="video/mp4"
-                />
-              </video>
-              <h3>Chef's Table Service</h3>
-              <p>Front-row seats to the finishing touches.</p>
-            </div>
-            <div class="video-card" data-reveal>
-              <video
-                controls
-                playsinline
-                preload="metadata"
-                poster="assets/images/dish-08.jpg"
-              >
-                <source
-                  src="assets/videos/lounge.mp4"
-                  type="video/mp4"
-                />
-              </video>
-              <h3>Golden Hour Lounge</h3>
-              <p>Crafted cocktails with a light bite pairing.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="ingredients">
-        <div class="container ingredients__grid">
-          <div class="ingredients__content" data-reveal>
-            <p class="eyebrow">Our Ingredients</p>
-            <h2>Global spice, local harvest.</h2>
-            <p>
-              We partner with Ontario farms and import single-origin spices
-              directly from India, finishing with house-made ghee and chutneys.
-            </p>
-          </div>
-          <div class="ingredients__cards">
-            <div class="ingredient" data-reveal>
-              <h3>Single-Origin Spice</h3>
-              <p>Hand-ground daily for bloom and depth.</p>
-            </div>
-            <div class="ingredient" data-reveal>
-              <h3>House Ferments</h3>
-              <p>Pickled lime, smoked chili, and ginger.</p>
-            </div>
-            <div class="ingredient" data-reveal>
-              <h3>Seasonal Produce</h3>
-              <p>Chef-led menus that evolve every 8 weeks.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="testimonials">
-        <div class="container">
-          <div class="section__heading" data-reveal>
-            <p class="eyebrow">Guest Stories</p>
-            <h2>What Toronto is saying.</h2>
-          </div>
-          <div class="testimonials__grid">
-            <article class="testimonial" data-reveal>
-              <p>
-                "An impeccable balance of tradition and innovation. The tasting
-                menu is a masterclass in spice."
-              </p>
-              <span>Food Journal TO</span>
-            </article>
-            <article class="testimonial" data-reveal>
-              <p>
-                "The service is graceful, the cocktails are layered, and the
-                ambiance is cinematic."
-              </p>
-              <span>City Style Magazine</span>
-            </article>
-            <article class="testimonial" data-reveal>
-              <p>
-                "Every plate was striking, every course memorable. Luxurydine is
-                now our celebration destination."
-              </p>
-              <span>OpenTable Diners</span>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section class="promos">
-        <div class="container">
-          <div class="section__heading" data-reveal>
-            <p class="eyebrow">Discover More</p>
-            <h2>Seasonal experiences at Luxurydine.</h2>
-          </div>
-          <div class="promos__grid">
-            <article class="promo" data-reveal>
-              <h3>Happy Hour</h3>
-              <p>Weekdays 4-6 PM with signature spritzes.</p>
-              <a href="#reserve">Reserve</a>
-            </article>
-            <article class="promo" data-reveal>
-              <h3>Winterlicious Menu</h3>
-              <p>Three-course prix fixe, limited seating.</p>
-              <a href="#reserve">Book Now</a>
-            </article>
-            <article class="promo" data-reveal>
-              <h3>Date Night</h3>
-              <p>Chef's table for two with curated pairings.</p>
-              <a href="#reserve">Request</a>
-            </article>
-          </div>
+          <div class="videos__grid" id="videos-grid"></div>
         </div>
       </section>
 
       <section class="reserve" id="reserve">
         <div class="container reserve__grid">
-          <div class="reserve__content" data-reveal>
+          <div class="reserve__content">
             <p class="eyebrow">Reserve a Table</p>
-            <h2>Let us host your evening.</h2>
-            <p>
-              Share your occasion and preferences. Our team will confirm within
-              the hour.
-            </p>
+            <h2 id="booking-title">Let us host your evening.</h2>
+            <p id="booking-description">Share your occasion and preferences. Our team will confirm shortly.</p>
           </div>
-          <form class="reserve__form" data-reveal>
+          <form class="reserve__form" id="reservation-form">
             <label>
               Full name
-              <input type="text" placeholder="Your name" required />
+              <input type="text" name="full_name" required />
             </label>
             <label>
               Email
-              <input type="email" placeholder="you@email.com" required />
+              <input type="email" name="email" required />
+            </label>
+            <label>
+              Phone
+              <input type="tel" name="phone" required />
             </label>
             <label>
               Date
-              <input type="date" required />
+              <input type="date" name="reservation_date" required />
             </label>
             <label>
               Time
-              <input type="time" required />
+              <input type="time" name="reservation_time" required />
             </label>
             <label>
               Guests
-              <select>
-                <option>2 guests</option>
-                <option>4 guests</option>
-                <option>6 guests</option>
-                <option>8 guests</option>
+              <select name="guests" required>
+                <option value="2">2 guests</option>
+                <option value="4">4 guests</option>
+                <option value="6">6 guests</option>
+                <option value="8">8 guests</option>
               </select>
             </label>
             <label>
               Occasion
-              <input type="text" placeholder="Anniversary, birthday" />
+              <input type="text" name="occasion" />
+            </label>
+            <label>
+              Notes
+              <textarea name="notes" rows="3"></textarea>
             </label>
             <button class="btn btn--solid" type="submit">Request Reservation</button>
+            <p class="form-feedback" id="reservation-feedback"></p>
+          </form>
+        </div>
+      </section>
+
+      <section class="reserve" id="order">
+        <div class="container reserve__grid">
+          <div class="reserve__content">
+            <p class="eyebrow">Pickup Orders</p>
+            <h2 id="ordering-title">Place a pickup order</h2>
+            <p id="ordering-description">Send your order request and we will call or email to confirm.</p>
+          </div>
+          <form class="reserve__form" id="order-form">
+            <label>
+              Full name
+              <input type="text" name="full_name" required />
+            </label>
+            <label>
+              Email
+              <input type="email" name="email" />
+            </label>
+            <label>
+              Phone
+              <input type="tel" name="phone" required />
+            </label>
+            <label>
+              Preferred pickup time
+              <input type="datetime-local" name="pickup_time" required />
+            </label>
+            <label>
+              Order details
+              <textarea name="order_details" rows="4" required placeholder="Dish names, quantity, special requests"></textarea>
+            </label>
+            <label>
+              Notes
+              <textarea name="notes" rows="2"></textarea>
+            </label>
+            <button class="btn btn--solid" type="submit">Send Order</button>
+            <p class="form-feedback" id="order-feedback"></p>
           </form>
         </div>
       </section>
@@ -532,35 +202,30 @@
     <footer class="footer" id="contact">
       <div class="container footer__grid">
         <div>
-          <h3>Luxurydine</h3>
-          <p>Modern Indian cuisine with candlelit elegance.</p>
+          <h3 id="footer-brand">Luxurydine</h3>
+          <p id="footer-tagline">Modern Indian cuisine with candlelit elegance.</p>
         </div>
         <div>
           <h4>Visit</h4>
-          <p>1248 St Clair Ave W</p>
-          <p>Toronto, ON M6E 1B4</p>
+          <p id="footer-address">1248 St Clair Ave W, Toronto, ON</p>
         </div>
         <div>
           <h4>Contact</h4>
-          <p>(416) 555-0140</p>
-          <p>info@luxurydine.com</p>
+          <p id="footer-phone">(416) 555-0140</p>
+          <p id="footer-email">info@luxurydine.com</p>
         </div>
         <div>
           <h4>Hours</h4>
-          <p>Mon-Thu: 5:00 PM - 10:00 PM</p>
-          <p>Fri-Sun: 4:00 PM - 11:00 PM</p>
+          <p id="footer-hours-1">Mon-Thu: 5:00 PM - 10:00 PM</p>
+          <p id="footer-hours-2">Fri-Sun: 4:00 PM - 11:00 PM</p>
         </div>
       </div>
       <div class="footer__bottom">
-        <span>Copyright 2026 Luxurydine</span>
-        <span>Instagram � Facebook � TikTok</span>
+        <span>Copyright <span id="footer-year"></span> <span id="footer-brand-small">Luxurydine</span></span>
+        <span id="footer-social">Instagram | Facebook | TikTok</span>
       </div>
     </footer>
+
+    <script src="main.js" defer></script>
   </body>
 </html>
-
-
-
-
-
-

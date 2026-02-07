@@ -1,0 +1,105 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Luxurydine Admin Login</title>
+    <style>
+      :root {
+        --bg: #111418;
+        --panel: #1b2027;
+        --text: #f7f4ee;
+        --muted: #b7b1a5;
+        --accent: #d2a65a;
+        --border: rgba(255, 255, 255, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: Manrope, Arial, sans-serif;
+        background: radial-gradient(circle at 20% 20%, rgba(210, 166, 90, 0.12), transparent 45%), #111418;
+        color: var(--text);
+      }
+
+      .card {
+        width: min(440px, 92vw);
+        padding: 28px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: 1.5rem;
+      }
+
+      p {
+        margin: 0 0 20px;
+        color: var(--muted);
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+      }
+
+      input {
+        width: 100%;
+        margin-bottom: 14px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: #121722;
+        color: var(--text);
+      }
+
+      button {
+        width: 100%;
+        padding: 10px 14px;
+        border: none;
+        border-radius: 10px;
+        background: var(--accent);
+        color: #1b150c;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .flash {
+        margin-bottom: 12px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #4a1f24;
+        border: 1px solid rgba(255, 144, 144, 0.35);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>Admin Login</h1>
+      <p>Use the admin password to manage website content, reservations, and orders.</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="flash">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <form method="post" action="{{ url_for('admin_login') }}">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required />
+        <button type="submit">Login</button>
+      </form>
+    </main>
+  </body>
+</html>
