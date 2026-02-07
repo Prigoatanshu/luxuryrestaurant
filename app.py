@@ -148,6 +148,116 @@ def parse_request_payload() -> dict:
     return request.form.to_dict()
 
 
+def parse_int(value, default: int = 0) -> int:
+    try:
+        return int(str(value).strip())
+    except (TypeError, ValueError):
+        return default
+
+
+def build_content_from_form(form_data) -> dict:
+    menu_count = max(0, min(parse_int(form_data.get("menu_count", "0")), 100))
+    video_count = max(0, min(parse_int(form_data.get("video_count", "0")), 50))
+
+    hero_stats = []
+    for index in range(3):
+        value = form_data.get(f"hero_stat_value_{index}", "").strip()
+        label = form_data.get(f"hero_stat_label_{index}", "").strip()
+        if value or label:
+            hero_stats.append({"value": value, "label": label})
+
+    menu_items = []
+    for index in range(menu_count):
+        name = form_data.get(f"menu_name_{index}", "").strip()
+        description = form_data.get(f"menu_description_{index}", "").strip()
+        tag = form_data.get(f"menu_tag_{index}", "").strip()
+        price = form_data.get(f"menu_price_{index}", "").strip()
+        image = form_data.get(f"menu_image_{index}", "").strip()
+        alt = form_data.get(f"menu_alt_{index}", "").strip()
+        if not any([name, description, tag, price, image, alt]):
+            continue
+
+        menu_items.append(
+            {
+                "name": name,
+                "description": description,
+                "tag": tag,
+                "price": price,
+                "image": image,
+                "alt": alt or name,
+            }
+        )
+
+    videos = []
+    for index in range(video_count):
+        title = form_data.get(f"video_title_{index}", "").strip()
+        description = form_data.get(f"video_description_{index}", "").strip()
+        video = form_data.get(f"video_file_{index}", "").strip()
+        poster = form_data.get(f"video_poster_{index}", "").strip()
+        if not any([title, description, video, poster]):
+            continue
+        videos.append(
+            {
+                "title": title,
+                "description": description,
+                "video": video,
+                "poster": poster,
+            }
+        )
+
+    footer_hours = []
+    hour_1 = form_data.get("footer_hours_1", "").strip()
+    hour_2 = form_data.get("footer_hours_2", "").strip()
+    if hour_1:
+        footer_hours.append(hour_1)
+    if hour_2:
+        footer_hours.append(hour_2)
+
+    return {
+        "brand": {
+            "name": form_data.get("brand_name", "").strip(),
+            "email": form_data.get("brand_email", "").strip(),
+            "phone": form_data.get("brand_phone", "").strip(),
+            "address": form_data.get("brand_address", "").strip(),
+        },
+        "hero": {
+            "eyebrow": form_data.get("hero_eyebrow", "").strip(),
+            "title": form_data.get("hero_title", "").strip(),
+            "description": form_data.get("hero_description", "").strip(),
+            "video": form_data.get("hero_video", "").strip(),
+            "poster": form_data.get("hero_poster", "").strip(),
+            "caption": form_data.get("hero_caption", "").strip(),
+            "stats": hero_stats,
+        },
+        "about": {
+            "eyebrow": form_data.get("about_eyebrow", "").strip(),
+            "title": form_data.get("about_title", "").strip(),
+            "description": form_data.get("about_description", "").strip(),
+            "image": form_data.get("about_image", "").strip(),
+            "badge": form_data.get("about_badge", "").strip(),
+        },
+        "menu": {
+            "eyebrow": form_data.get("menu_eyebrow", "").strip(),
+            "title": form_data.get("menu_title", "").strip(),
+            "items": menu_items,
+        },
+        "videos": videos,
+        "booking": {
+            "title": form_data.get("booking_title", "").strip(),
+            "description": form_data.get("booking_description", "").strip(),
+        },
+        "ordering": {
+            "title": form_data.get("ordering_title", "").strip(),
+            "description": form_data.get("ordering_description", "").strip(),
+        },
+        "footer": {
+            "tagline": form_data.get("footer_tagline", "").strip(),
+            "hours": footer_hours,
+            "social": form_data.get("footer_social", "").strip(),
+        },
+    }
+
+
 @app.get("/api/content")
 def api_content() -> tuple:
     return jsonify(get_site_content()), 200
@@ -262,15 +372,33 @@ def admin_logout():
 @app.get("/admin")
 @admin_required
 def admin_panel():
+    content = get_site_content()
     reservations = sorted(load_reservations(), key=lambda row: row.get("created_at", ""), reverse=True)[:200]
     orders = sorted(load_orders(), key=lambda row: row.get("created_at", ""), reverse=True)[:200]
 
     return render_template(
         "admin_panel.html",
-        content_json=json.dumps(get_site_content(), indent=2),
+        content=content,
         reservations=reservations,
         orders=orders,
     )
+
+
+@app.post("/admin/content-form")
+@admin_required
+def admin_update_content_form():
+    parsed_content = build_content_from_form(request.form)
+
+    is_valid, message = validate_content(parsed_content)
+    if not is_valid:
+        flash(message, "error")
+        return redirect(url_for("admin_panel"))
+
+    with write_lock:
+        write_json(CONTENT_PATH, parsed_content)
+
+    flash("Website content updated", "success")
+    return redirect(url_for("admin_panel"))
 
 
 @app.post("/admin/content")

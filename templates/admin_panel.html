@@ -8,9 +8,11 @@
       :root {
         --bg: #0f1115;
         --panel: #1a1f26;
+        --sub-panel: #141922;
         --text: #f6f3ed;
         --muted: #b8b1a4;
         --accent: #d2a65a;
+        --danger: #a14646;
         --success: #1d5f3a;
         --error: #6b2323;
         --border: rgba(255, 255, 255, 0.08);
@@ -36,7 +38,7 @@
         align-items: center;
         padding: 14px 20px;
         border-bottom: 1px solid var(--border);
-        background: rgba(15, 17, 21, 0.95);
+        background: rgba(15, 17, 21, 0.96);
       }
 
       .header a {
@@ -47,7 +49,7 @@
 
       .layout {
         display: grid;
-        grid-template-columns: 1.2fr 1fr;
+        grid-template-columns: 1.3fr 1fr;
         gap: 16px;
         padding: 16px;
       }
@@ -59,27 +61,68 @@
         padding: 14px;
       }
 
+      .section-card {
+        background: var(--sub-panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 12px;
+      }
+
       h2 {
         margin: 0 0 8px;
         font-size: 1.05rem;
       }
 
+      h3 {
+        margin: 0 0 8px;
+        font-size: 0.96rem;
+      }
+
       p {
         margin: 0 0 10px;
         color: var(--muted);
-        font-size: 0.92rem;
+        font-size: 0.9rem;
       }
 
-      textarea {
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .field {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+
+      .field label {
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+
+      .field input,
+      .field textarea,
+      .field select {
         width: 100%;
-        min-height: 520px;
-        padding: 12px;
+        padding: 9px 10px;
         border-radius: 10px;
         border: 1px solid var(--border);
-        background: #121723;
+        background: #111622;
         color: var(--text);
-        font-family: Consolas, Monaco, monospace;
-        font-size: 0.84rem;
+        font: inherit;
+      }
+
+      .field textarea {
+        min-height: 80px;
+        resize: vertical;
       }
 
       button {
@@ -90,6 +133,22 @@
         color: #1b150c;
         font-weight: 700;
         cursor: pointer;
+      }
+
+      .btn-secondary {
+        background: #273142;
+        color: #d6dbe2;
+      }
+
+      .btn-danger {
+        background: var(--danger);
+        color: #fff;
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
       }
 
       .flash {
@@ -105,6 +164,25 @@
 
       .flash.error {
         background: var(--error);
+      }
+
+      .repeater {
+        display: grid;
+        gap: 10px;
+      }
+
+      .repeater-item {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px;
+        background: #111622;
+      }
+
+      .item-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
       }
 
       .table-wrap {
@@ -130,14 +208,6 @@
         font-weight: 600;
       }
 
-      select {
-        padding: 6px;
-        border-radius: 8px;
-        border: 1px solid var(--border);
-        background: #121723;
-        color: var(--text);
-      }
-
       .status-form {
         display: flex;
         gap: 6px;
@@ -149,13 +219,23 @@
         font-size: 0.78rem;
       }
 
-      @media (max-width: 1100px) {
+      .sticky-save {
+        position: sticky;
+        bottom: 8px;
+        padding-top: 8px;
+        background: linear-gradient(to top, var(--panel) 60%, rgba(26, 31, 38, 0));
+      }
+
+      @media (max-width: 1200px) {
         .layout {
           grid-template-columns: 1fr;
         }
+      }
 
-        textarea {
-          min-height: 360px;
+      @media (max-width: 760px) {
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
         }
       }
     </style>
@@ -166,10 +246,22 @@
       <a href="{{ url_for('admin_logout') }}">Logout</a>
     </header>
 
+    {% set brand = content.get('brand', {}) %}
+    {% set hero = content.get('hero', {}) %}
+    {% set hero_stats = hero.get('stats', []) %}
+    {% set about = content.get('about', {}) %}
+    {% set menu = content.get('menu', {}) %}
+    {% set menu_items = menu.get('items', []) %}
+    {% set videos = content.get('videos', []) %}
+    {% set booking = content.get('booking', {}) %}
+    {% set ordering = content.get('ordering', {}) %}
+    {% set footer = content.get('footer', {}) %}
+    {% set footer_hours = footer.get('hours', []) %}
+
     <main class="layout">
       <section class="panel">
-        <h2>Website Content JSON</h2>
-        <p>Edit menu names/prices, hero text, contact info, hours, and more in one place.</p>
+        <h2>Website Editor</h2>
+        <p>Update content here without editing code. Save once to publish updates on the live site.</p>
 
         {% with messages = get_flashed_messages(with_categories=true) %}
           {% if messages %}
@@ -179,10 +271,317 @@
           {% endif %}
         {% endwith %}
 
-        <form method="post" action="{{ url_for('admin_update_content') }}">
-          <textarea name="content_json" spellcheck="false" required>{{ content_json }}</textarea>
-          <div style="margin-top: 10px; display: flex; gap: 8px;">
-            <button type="submit">Save Content</button>
+        <form method="post" action="{{ url_for('admin_update_content_form') }}" id="content-form">
+          <div class="section-card">
+            <h3>Brand & Contact</h3>
+            <div class="grid-2">
+              <div class="field">
+                <label>Brand Name</label>
+                <input type="text" name="brand_name" value="{{ brand.get('name', '') }}" required />
+              </div>
+              <div class="field">
+                <label>Email</label>
+                <input type="email" name="brand_email" value="{{ brand.get('email', '') }}" required />
+              </div>
+              <div class="field">
+                <label>Phone</label>
+                <input type="text" name="brand_phone" value="{{ brand.get('phone', '') }}" required />
+              </div>
+              <div class="field">
+                <label>Address</label>
+                <input type="text" name="brand_address" value="{{ brand.get('address', '') }}" required />
+              </div>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <h3>Hero Section</h3>
+            <div class="field">
+              <label>Eyebrow Text</label>
+              <input type="text" name="hero_eyebrow" value="{{ hero.get('eyebrow', '') }}" />
+            </div>
+            <div class="field">
+              <label>Main Title</label>
+              <input type="text" name="hero_title" value="{{ hero.get('title', '') }}" required />
+            </div>
+            <div class="field">
+              <label>Description</label>
+              <textarea name="hero_description">{{ hero.get('description', '') }}</textarea>
+            </div>
+            <div class="grid-2">
+              <div class="field">
+                <label>Hero Video File</label>
+                <input type="text" name="hero_video" value="{{ hero.get('video', '') }}" />
+              </div>
+              <div class="field">
+                <label>Hero Poster Image</label>
+                <input type="text" name="hero_poster" value="{{ hero.get('poster', '') }}" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Hero Caption</label>
+              <input type="text" name="hero_caption" value="{{ hero.get('caption', '') }}" />
+            </div>
+            <div class="grid-3">
+              {% for i in range(3) %}
+                <div>
+                  <div class="field">
+                    <label>Stat {{ i + 1 }} Value</label>
+                    <input
+                      type="text"
+                      name="hero_stat_value_{{ i }}"
+                      value="{{ hero_stats[i]['value'] if hero_stats|length > i else '' }}"
+                    />
+                  </div>
+                  <div class="field">
+                    <label>Stat {{ i + 1 }} Label</label>
+                    <input
+                      type="text"
+                      name="hero_stat_label_{{ i }}"
+                      value="{{ hero_stats[i]['label'] if hero_stats|length > i else '' }}"
+                    />
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="section-card">
+            <h3>About Section</h3>
+            <div class="field">
+              <label>Eyebrow</label>
+              <input type="text" name="about_eyebrow" value="{{ about.get('eyebrow', '') }}" />
+            </div>
+            <div class="field">
+              <label>Title</label>
+              <input type="text" name="about_title" value="{{ about.get('title', '') }}" />
+            </div>
+            <div class="field">
+              <label>Description</label>
+              <textarea name="about_description">{{ about.get('description', '') }}</textarea>
+            </div>
+            <div class="grid-2">
+              <div class="field">
+                <label>Image Path</label>
+                <input type="text" name="about_image" value="{{ about.get('image', '') }}" />
+              </div>
+              <div class="field">
+                <label>Badge</label>
+                <input type="text" name="about_badge" value="{{ about.get('badge', '') }}" />
+              </div>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <h3>Menu Header</h3>
+            <div class="grid-2">
+              <div class="field">
+                <label>Eyebrow</label>
+                <input type="text" name="menu_eyebrow" value="{{ menu.get('eyebrow', '') }}" />
+              </div>
+              <div class="field">
+                <label>Title</label>
+                <input type="text" name="menu_title" value="{{ menu.get('title', '') }}" />
+              </div>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <div class="item-head">
+              <h3>Menu Items</h3>
+              <button type="button" class="btn-secondary" id="add-menu-item">Add Menu Item</button>
+            </div>
+            <input type="hidden" name="menu_count" id="menu-count" value="{{ menu_items|length if menu_items|length > 0 else 1 }}" />
+            <div class="repeater" id="menu-items">
+              {% if menu_items|length > 0 %}
+                {% for item in menu_items %}
+                  <div class="repeater-item" data-type="menu-item">
+                    <div class="item-head">
+                      <strong>Item</strong>
+                      <button type="button" class="btn-danger remove-item">Remove</button>
+                    </div>
+                    <div class="grid-2">
+                      <div class="field">
+                        <label>Name</label>
+                        <input type="text" data-field="name" name="menu_name_{{ loop.index0 }}" value="{{ item.get('name', '') }}" />
+                      </div>
+                      <div class="field">
+                        <label>Price</label>
+                        <input type="text" data-field="price" name="menu_price_{{ loop.index0 }}" value="{{ item.get('price', '') }}" />
+                      </div>
+                    </div>
+                    <div class="grid-2">
+                      <div class="field">
+                        <label>Tag</label>
+                        <input type="text" data-field="tag" name="menu_tag_{{ loop.index0 }}" value="{{ item.get('tag', '') }}" />
+                      </div>
+                      <div class="field">
+                        <label>Image Path</label>
+                        <input type="text" data-field="image" name="menu_image_{{ loop.index0 }}" value="{{ item.get('image', '') }}" />
+                      </div>
+                    </div>
+                    <div class="field">
+                      <label>Description</label>
+                      <textarea data-field="description" name="menu_description_{{ loop.index0 }}">{{ item.get('description', '') }}</textarea>
+                    </div>
+                    <div class="field">
+                      <label>Image Alt</label>
+                      <input type="text" data-field="alt" name="menu_alt_{{ loop.index0 }}" value="{{ item.get('alt', '') }}" />
+                    </div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="repeater-item" data-type="menu-item">
+                  <div class="item-head">
+                    <strong>Item</strong>
+                    <button type="button" class="btn-danger remove-item">Remove</button>
+                  </div>
+                  <div class="grid-2">
+                    <div class="field">
+                      <label>Name</label>
+                      <input type="text" data-field="name" name="menu_name_0" />
+                    </div>
+                    <div class="field">
+                      <label>Price</label>
+                      <input type="text" data-field="price" name="menu_price_0" />
+                    </div>
+                  </div>
+                  <div class="grid-2">
+                    <div class="field">
+                      <label>Tag</label>
+                      <input type="text" data-field="tag" name="menu_tag_0" />
+                    </div>
+                    <div class="field">
+                      <label>Image Path</label>
+                      <input type="text" data-field="image" name="menu_image_0" />
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label>Description</label>
+                    <textarea data-field="description" name="menu_description_0"></textarea>
+                  </div>
+                  <div class="field">
+                    <label>Image Alt</label>
+                    <input type="text" data-field="alt" name="menu_alt_0" />
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="section-card">
+            <div class="item-head">
+              <h3>Video Cards</h3>
+              <button type="button" class="btn-secondary" id="add-video-item">Add Video</button>
+            </div>
+            <input type="hidden" name="video_count" id="video-count" value="{{ videos|length if videos|length > 0 else 1 }}" />
+            <div class="repeater" id="video-items">
+              {% if videos|length > 0 %}
+                {% for item in videos %}
+                  <div class="repeater-item" data-type="video-item">
+                    <div class="item-head">
+                      <strong>Video</strong>
+                      <button type="button" class="btn-danger remove-item">Remove</button>
+                    </div>
+                    <div class="field">
+                      <label>Title</label>
+                      <input type="text" data-field="title" name="video_title_{{ loop.index0 }}" value="{{ item.get('title', '') }}" />
+                    </div>
+                    <div class="field">
+                      <label>Description</label>
+                      <textarea data-field="description" name="video_description_{{ loop.index0 }}">{{ item.get('description', '') }}</textarea>
+                    </div>
+                    <div class="grid-2">
+                      <div class="field">
+                        <label>Video Path</label>
+                        <input type="text" data-field="file" name="video_file_{{ loop.index0 }}" value="{{ item.get('video', '') }}" />
+                      </div>
+                      <div class="field">
+                        <label>Poster Path</label>
+                        <input type="text" data-field="poster" name="video_poster_{{ loop.index0 }}" value="{{ item.get('poster', '') }}" />
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <div class="repeater-item" data-type="video-item">
+                  <div class="item-head">
+                    <strong>Video</strong>
+                    <button type="button" class="btn-danger remove-item">Remove</button>
+                  </div>
+                  <div class="field">
+                    <label>Title</label>
+                    <input type="text" data-field="title" name="video_title_0" />
+                  </div>
+                  <div class="field">
+                    <label>Description</label>
+                    <textarea data-field="description" name="video_description_0"></textarea>
+                  </div>
+                  <div class="grid-2">
+                    <div class="field">
+                      <label>Video Path</label>
+                      <input type="text" data-field="file" name="video_file_0" />
+                    </div>
+                    <div class="field">
+                      <label>Poster Path</label>
+                      <input type="text" data-field="poster" name="video_poster_0" />
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="section-card">
+            <h3>Booking & Ordering</h3>
+            <div class="grid-2">
+              <div>
+                <div class="field">
+                  <label>Booking Title</label>
+                  <input type="text" name="booking_title" value="{{ booking.get('title', '') }}" />
+                </div>
+                <div class="field">
+                  <label>Booking Description</label>
+                  <textarea name="booking_description">{{ booking.get('description', '') }}</textarea>
+                </div>
+              </div>
+              <div>
+                <div class="field">
+                  <label>Ordering Title</label>
+                  <input type="text" name="ordering_title" value="{{ ordering.get('title', '') }}" />
+                </div>
+                <div class="field">
+                  <label>Ordering Description</label>
+                  <textarea name="ordering_description">{{ ordering.get('description', '') }}</textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <h3>Footer</h3>
+            <div class="field">
+              <label>Tagline</label>
+              <input type="text" name="footer_tagline" value="{{ footer.get('tagline', '') }}" />
+            </div>
+            <div class="grid-2">
+              <div class="field">
+                <label>Hours Line 1</label>
+                <input type="text" name="footer_hours_1" value="{{ footer_hours[0] if footer_hours|length > 0 else '' }}" />
+              </div>
+              <div class="field">
+                <label>Hours Line 2</label>
+                <input type="text" name="footer_hours_2" value="{{ footer_hours[1] if footer_hours|length > 1 else '' }}" />
+              </div>
+            </div>
+            <div class="field">
+              <label>Social Text</label>
+              <input type="text" name="footer_social" value="{{ footer.get('social', '') }}" />
+            </div>
+          </div>
+
+          <div class="sticky-save">
+            <button type="submit">Save Website Content</button>
           </div>
         </form>
       </section>
@@ -282,5 +681,95 @@
         </div>
       </section>
     </main>
+
+    <script>
+      (function () {
+        function reindex(containerId, fieldPrefix, hiddenCountId, headingText) {
+          var container = document.getElementById(containerId);
+          var items = container.querySelectorAll(".repeater-item");
+          items.forEach(function (item, index) {
+            var title = item.querySelector(".item-head strong");
+            if (title) {
+              title.textContent = headingText + " " + (index + 1);
+            }
+
+            item.querySelectorAll("[data-field]").forEach(function (input) {
+              var field = input.getAttribute("data-field");
+              input.name = fieldPrefix + "_" + field + "_" + index;
+            });
+          });
+          document.getElementById(hiddenCountId).value = items.length;
+        }
+
+        function buildMenuItem() {
+          var wrapper = document.createElement("div");
+          wrapper.className = "repeater-item";
+          wrapper.setAttribute("data-type", "menu-item");
+          wrapper.innerHTML =
+            '<div class="item-head"><strong>Item</strong><button type="button" class="btn-danger remove-item">Remove</button></div>' +
+            '<div class="grid-2">' +
+            '<div class="field"><label>Name</label><input type="text" data-field="name" /></div>' +
+            '<div class="field"><label>Price</label><input type="text" data-field="price" /></div>' +
+            '</div>' +
+            '<div class="grid-2">' +
+            '<div class="field"><label>Tag</label><input type="text" data-field="tag" /></div>' +
+            '<div class="field"><label>Image Path</label><input type="text" data-field="image" /></div>' +
+            '</div>' +
+            '<div class="field"><label>Description</label><textarea data-field="description"></textarea></div>' +
+            '<div class="field"><label>Image Alt</label><input type="text" data-field="alt" /></div>';
+          return wrapper;
+        }
+
+        function buildVideoItem() {
+          var wrapper = document.createElement("div");
+          wrapper.className = "repeater-item";
+          wrapper.setAttribute("data-type", "video-item");
+          wrapper.innerHTML =
+            '<div class="item-head"><strong>Video</strong><button type="button" class="btn-danger remove-item">Remove</button></div>' +
+            '<div class="field"><label>Title</label><input type="text" data-field="title" /></div>' +
+            '<div class="field"><label>Description</label><textarea data-field="description"></textarea></div>' +
+            '<div class="grid-2">' +
+            '<div class="field"><label>Video Path</label><input type="text" data-field="file" /></div>' +
+            '<div class="field"><label>Poster Path</label><input type="text" data-field="poster" /></div>' +
+            '</div>';
+          return wrapper;
+        }
+
+        document.getElementById("add-menu-item").addEventListener("click", function () {
+          var container = document.getElementById("menu-items");
+          container.appendChild(buildMenuItem());
+          reindex("menu-items", "menu", "menu-count", "Item");
+        });
+
+        document.getElementById("add-video-item").addEventListener("click", function () {
+          var container = document.getElementById("video-items");
+          container.appendChild(buildVideoItem());
+          reindex("video-items", "video", "video-count", "Video");
+        });
+
+        document.addEventListener("click", function (event) {
+          if (!event.target.classList.contains("remove-item")) {
+            return;
+          }
+
+          var item = event.target.closest(".repeater-item");
+          var parent = item.parentElement;
+          if (parent.querySelectorAll(".repeater-item").length <= 1) {
+            return;
+          }
+
+          item.remove();
+          if (parent.id === "menu-items") {
+            reindex("menu-items", "menu", "menu-count", "Item");
+          }
+          if (parent.id === "video-items") {
+            reindex("video-items", "video", "video-count", "Video");
+          }
+        });
+
+        reindex("menu-items", "menu", "menu-count", "Item");
+        reindex("video-items", "video", "video-count", "Video");
+      })();
+    </script>
   </body>
 </html>
