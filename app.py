@@ -272,23 +272,26 @@ def api_create_reservation() -> tuple:
         if not str(payload.get(field, "")).strip():
             return jsonify({"ok": False, "message": f"Missing required field: {field}"}), 400
 
-    with write_lock:
-        reservations = load_reservations()
-        reservation = {
-            "id": next_id(reservations),
-            "full_name": payload["full_name"].strip(),
-            "email": payload["email"].strip(),
-            "phone": payload["phone"].strip(),
-            "reservation_date": payload["reservation_date"].strip(),
-            "reservation_time": payload["reservation_time"].strip(),
-            "guests": str(payload["guests"]).strip(),
-            "occasion": payload.get("occasion", "").strip(),
-            "notes": payload.get("notes", "").strip(),
-            "status": "new",
-            "created_at": utc_now_iso(),
-        }
-        reservations.append(reservation)
-        write_json(RESERVATIONS_PATH, reservations)
+    try:
+        with write_lock:
+            reservations = load_reservations()
+            reservation = {
+                "id": next_id(reservations),
+                "full_name": payload["full_name"].strip(),
+                "email": payload["email"].strip(),
+                "phone": payload["phone"].strip(),
+                "reservation_date": payload["reservation_date"].strip(),
+                "reservation_time": payload["reservation_time"].strip(),
+                "guests": str(payload["guests"]).strip(),
+                "occasion": payload.get("occasion", "").strip(),
+                "notes": payload.get("notes", "").strip(),
+                "status": "new",
+                "created_at": utc_now_iso(),
+            }
+            reservations.append(reservation)
+            write_json(RESERVATIONS_PATH, reservations)
+    except OSError:
+        return jsonify({"ok": False, "message": "Unable to save reservation right now. Please try again."}), 500
 
     email_body = (
         "New reservation request\n\n"
@@ -315,21 +318,24 @@ def api_create_order() -> tuple:
         if not str(payload.get(field, "")).strip():
             return jsonify({"ok": False, "message": f"Missing required field: {field}"}), 400
 
-    with write_lock:
-        orders = load_orders()
-        order = {
-            "id": next_id(orders),
-            "full_name": payload["full_name"].strip(),
-            "email": payload.get("email", "").strip(),
-            "phone": payload["phone"].strip(),
-            "pickup_time": payload["pickup_time"].strip(),
-            "order_details": payload["order_details"].strip(),
-            "notes": payload.get("notes", "").strip(),
-            "status": "new",
-            "created_at": utc_now_iso(),
-        }
-        orders.append(order)
-        write_json(ORDERS_PATH, orders)
+    try:
+        with write_lock:
+            orders = load_orders()
+            order = {
+                "id": next_id(orders),
+                "full_name": payload["full_name"].strip(),
+                "email": payload.get("email", "").strip(),
+                "phone": payload["phone"].strip(),
+                "pickup_time": payload["pickup_time"].strip(),
+                "order_details": payload["order_details"].strip(),
+                "notes": payload.get("notes", "").strip(),
+                "status": "new",
+                "created_at": utc_now_iso(),
+            }
+            orders.append(order)
+            write_json(ORDERS_PATH, orders)
+    except OSError:
+        return jsonify({"ok": False, "message": "Unable to save order right now. Please try again."}), 500
 
     email_body = (
         "New order request\n\n"
@@ -498,6 +504,27 @@ def static_files(path: str):
         return send_from_directory(app.static_folder, path)
 
     abort(404)
+
+
+@app.errorhandler(404)
+def handle_404(_error):
+    if request.path.startswith("/api/"):
+        return jsonify({"ok": False, "message": "API endpoint not found"}), 404
+    return ("Not Found", 404)
+
+
+@app.errorhandler(405)
+def handle_405(_error):
+    if request.path.startswith("/api/"):
+        return jsonify({"ok": False, "message": "Method not allowed"}), 405
+    return ("Method Not Allowed", 405)
+
+
+@app.errorhandler(500)
+def handle_500(_error):
+    if request.path.startswith("/api/"):
+        return jsonify({"ok": False, "message": "Internal server error"}), 500
+    return ("Internal Server Error", 500)
 
 
 init_storage()

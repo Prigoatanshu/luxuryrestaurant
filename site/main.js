@@ -215,13 +215,35 @@
         body: JSON.stringify(formToJson(form)),
       });
 
-      var data = await response.json();
-      if (!response.ok || !data.ok) {
+      var responseText = await response.text();
+      var data = null;
+      if (responseText) {
+        try {
+          data = JSON.parse(responseText);
+        } catch (_error) {
+          data = null;
+        }
+      }
+
+      if (!response.ok) {
+        if (data && data.message) {
+          throw new Error(data.message);
+        }
+        if (response.status === 404) {
+          throw new Error("Order API not found on server. Redeploy backend.");
+        }
+        if (response.status === 405) {
+          throw new Error("API method not allowed. Check backend deploy.");
+        }
+        throw new Error("Server error (" + response.status + "). Please try again.");
+      }
+
+      if (data && data.ok === false) {
         throw new Error(data.message || "Request failed");
       }
 
       form.reset();
-      setFeedback(feedback, data.message || "Submitted", true);
+      setFeedback(feedback, (data && data.message) || "Submitted", true);
     } catch (error) {
       setFeedback(feedback, error.message || "Submission failed", false);
     }
