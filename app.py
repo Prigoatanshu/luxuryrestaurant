@@ -1,4 +1,4 @@
-﻿import json
+import json
 import os
 import smtplib
 import threading
@@ -376,6 +376,11 @@ def api_content() -> tuple:
     return jsonify(get_site_content()), 200
 
 
+@app.get("/api/content/")
+def api_content_trailing_slash() -> tuple:
+    return api_content()
+
+
 @app.post("/api/reservations")
 def api_create_reservation() -> tuple:
     payload = parse_request_payload()
@@ -429,7 +434,7 @@ def api_create_reservation() -> tuple:
         app.logger.exception("Failed updating reservation email notification status")
 
     if email_sent:
-        return jsonify({"ok": True, "message": "Reservation request received."}), 201
+        return jsonify({"ok": True, "message": "Reservation request received.", "email_sent": True}), 201
 
     app.logger.warning("Reservation email delivery failed for id=%s: %s", reservation["id"], email_error)
     return jsonify(
@@ -439,6 +444,11 @@ def api_create_reservation() -> tuple:
             "email_sent": False,
         }
     ), 201
+
+
+@app.post("/api/reservations/")
+def api_create_reservation_trailing_slash() -> tuple:
+    return api_create_reservation()
 
 
 @app.post("/api/orders")
@@ -490,7 +500,7 @@ def api_create_order() -> tuple:
         app.logger.exception("Failed updating order email notification status")
 
     if email_sent:
-        return jsonify({"ok": True, "message": "Order request received."}), 201
+        return jsonify({"ok": True, "message": "Order request received.", "email_sent": True}), 201
 
     app.logger.warning("Order email delivery failed for id=%s: %s", order["id"], email_error)
     return jsonify(
@@ -500,6 +510,11 @@ def api_create_order() -> tuple:
             "email_sent": False,
         }
     ), 201
+
+
+@app.post("/api/orders/")
+def api_create_order_trailing_slash() -> tuple:
+    return api_create_order()
 
 
 @app.route("/admin/login", methods=["GET", "POST"])
