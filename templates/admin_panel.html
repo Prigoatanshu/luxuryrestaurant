@@ -588,6 +588,20 @@
 
       <section>
         <div class="panel" style="margin-bottom: 16px;">
+          <h2>Email Notifications</h2>
+          {% if email_ok %}
+            <p style="color: #8ee0b2;">SMTP configuration is present.</p>
+          {% else %}
+            <p style="color: #ffb4b4;">
+              Missing SMTP env vars: {{ email_missing | join(', ') }}
+            </p>
+          {% endif %}
+          <form method="post" action="{{ url_for('admin_email_test') }}">
+            <button type="submit">Send Test Email</button>
+          </form>
+        </div>
+
+        <div class="panel" style="margin-bottom: 16px;">
           <h2>Reservations (Latest 200)</h2>
           <div class="table-wrap">
             <table>
@@ -597,6 +611,7 @@
                   <th>Guest</th>
                   <th>Date/Time</th>
                   <th>Guests</th>
+                  <th>Email</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -614,6 +629,20 @@
                       {{ row['reservation_time'] }}
                     </td>
                     <td>{{ row['guests'] }}</td>
+                    <td>
+                      {% set notify = row.get('email_notification', {}) %}
+                      {% if notify.get('sent') == True %}
+                        Sent
+                      {% elif notify.get('sent') == False %}
+                        <span style="color: #ffb4b4;">Failed</span>
+                        {% if notify.get('error') %}
+                          <br />
+                          <small style="color: #ffb4b4;">{{ notify.get('error')[:120] }}</small>
+                        {% endif %}
+                      {% else %}
+                        Unknown
+                      {% endif %}
+                    </td>
                     <td>
                       <form class="status-form" method="post" action="{{ url_for('admin_update_reservation_status', reservation_id=row['id']) }}">
                         <select name="status">
@@ -645,6 +674,7 @@
                   <th>Customer</th>
                   <th>Pickup</th>
                   <th>Details</th>
+                  <th>Email</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -659,6 +689,20 @@
                     </td>
                     <td>{{ row['pickup_time'] }}</td>
                     <td>{{ row['order_details'] }}</td>
+                    <td>
+                      {% set notify = row.get('email_notification', {}) %}
+                      {% if notify.get('sent') == True %}
+                        Sent
+                      {% elif notify.get('sent') == False %}
+                        <span style="color: #ffb4b4;">Failed</span>
+                        {% if notify.get('error') %}
+                          <br />
+                          <small style="color: #ffb4b4;">{{ notify.get('error')[:120] }}</small>
+                        {% endif %}
+                      {% else %}
+                        Unknown
+                      {% endif %}
+                    </td>
                     <td>
                       <form class="status-form" method="post" action="{{ url_for('admin_update_order_status', order_id=row['id']) }}">
                         <select name="status">

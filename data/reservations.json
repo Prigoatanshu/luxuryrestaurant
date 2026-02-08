@@ -1,1 +1,46 @@
-﻿[]
+[
+  {
+    "id": 1,
+    "full_name": "A",
+    "email": "a@a.com",
+    "phone": "123",
+    "reservation_date": "2026-02-13",
+    "reservation_time": "18:30",
+    "guests": "2",
+    "occasion": "",
+    "notes": "",
+    "status": "new",
+    "created_at": "2026-02-08T14:54:29+00:00"
+  },
+  {
+    "id": 2,
+    "full_name": "Test User",
+    "email": "test@example.com",
+    "phone": "1234567890",
+    "reservation_date": "2026-02-20",
+    "reservation_time": "20:00",
+    "guests": "2",
+    "occasion": "Birthday",
+    "notes": "Window seat",
+    "status": "new",
+    "created_at": "2026-02-08T15:28:58+00:00"
+  },
+  {
+    "id": 3,
+    "full_name": "Debug User",
+    "email": "debug@example.com",
+    "phone": "1112223333",
+    "reservation_date": "2026-02-15",
+    "reservation_time": "19:30",
+    "guests": "2",
+    "occasion": "Anniversary",
+    "notes": "Quiet table",
+    "status": "new",
+    "created_at": "2026-02-08T15:34:45+00:00",
+    "email_notification": {
+      "sent": false,
+      "error": "Missing SMTP config environment variables: SMTP_HOST, SMTP_USER, SMTP_PASSWORD, NOTIFY_TO_EMAIL, NOTIFY_FROM_EMAIL",
+      "updated_at": "2026-02-08T15:34:45+00:00"
+    }
+  }
+]
