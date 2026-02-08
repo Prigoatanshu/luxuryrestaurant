@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ title }}</title>
+
+  <!-- Bootstrap -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Font Awesome (Icons) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&family=Playfair+Display:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- Top Contact Bar -->
+<div class="top-bar d-none d-md-block">
+  <div class="container d-flex justify-content-between align-items-center">
+    <div>
+      <i class="fa-solid fa-location-dot me-2"></i> Toronto, ON
+      <span class="mx-3">|</span>
+      <i class="fa-solid fa-phone me-2"></i> +91 9027276302
+      <span class="mx-3">|</span>
+      <i class="fa-solid fa-envelope me-2"></i> jhapriyanshu107@gmail.com
+    </div>
+    <div>
+      <a class="top-bar-link" href="/contact">Book Now</a>
+    </div>
+  </div>
+</div>
+
+<!-- Sticky Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="/">LuxuryDine</a>
+
+    <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#nav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="nav" class="collapse navbar-collapse">
+      <ul class="navbar-nav ms-auto">
+
+        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="/menu">Menu</a></li>
+        <li class="nav-item"><a class="nav-link" href="/about">About</a></li>
+        <li class="nav-item"><a class="nav-link" href="/gallery">Gallery</a></li>
+        <li class="nav-item"><a class="nav-link" href="/events">Events</a></li>
+        <li class="nav-item"><a class="nav-link" href="/private-dining">Private Dining</a></li>
+        <li class="nav-item"><a class="nav-link" href="/contact">Contact</a></li>
+
+      </ul>
+    </div>
+  </div>
+</nav>
+
+{% block content %}{% endblock %}
+
+<!-- Footer -->
+<footer class="bg-dark text-white text-center p-4">
+
+  <div class="mb-2">
+    <a href="#" class="text-white mx-2"><i class="fab fa-facebook"></i></a>
+    <a href="#" class="text-white mx-2"><i class="fab fa-instagram"></i></a>
+    <a href="#" class="text-white mx-2"><i class="fab fa-twitter"></i></a>
+  </div>
+
+  &copy; 2026 LuxuryDine | Crafted with care
+
+</footer>
+
+
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

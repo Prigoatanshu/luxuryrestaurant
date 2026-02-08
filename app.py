@@ -1,534 +1,321 @@
-﻿import json
 import os
 import smtplib
-import threading
-from datetime import datetime, timezone
+import sqlite3
+import urllib.parse
 from email.message import EmailMessage
-from functools import wraps
-from pathlib import Path
 
-from flask import (
-    Flask,
-    abort,
-    flash,
-    jsonify,
-    redirect,
-    render_template,
-    request,
-    send_from_directory,
-    session,
-    url_for,
-)
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 
-BASE_DIR = Path(__file__).resolve().parent
-SITE_DIR = BASE_DIR / "site"
-DATA_DIR = BASE_DIR / "data"
-DEFAULT_CONTENT_PATH = SITE_DIR / "content-default.json"
-CONTENT_PATH = DATA_DIR / "content.json"
-RESERVATIONS_PATH = DATA_DIR / "reservations.json"
-ORDERS_PATH = DATA_DIR / "orders.json"
-
-app = Flask(__name__, static_folder=str(SITE_DIR), static_url_path="")
-app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "change-this-secret-key")
-write_lock = threading.Lock()
+app = Flask(__name__)
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "luxurydine-dev-key")
+DB_PATH = os.path.join(os.path.dirname(__file__), "luxurydine.db")
 
 
-def utc_now_iso() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+def get_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
-def read_json(path: Path, default):
-    if not path.exists():
-        return default
-
-    with path.open("r", encoding="utf-8-sig") as file:
-        return json.load(file)
-
-
-def write_json(path: Path, payload) -> None:
-    with path.open("w", encoding="utf-8") as file:
-        json.dump(payload, file, indent=2)
-
-
-def load_default_content() -> dict:
-    with DEFAULT_CONTENT_PATH.open("r", encoding="utf-8-sig") as file:
-        return json.load(file)
-
-
-def init_storage() -> None:
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-
-    if not CONTENT_PATH.exists():
-        write_json(CONTENT_PATH, load_default_content())
-
-    if not RESERVATIONS_PATH.exists():
-        write_json(RESERVATIONS_PATH, [])
-
-    if not ORDERS_PATH.exists():
-        write_json(ORDERS_PATH, [])
-
-
-def validate_content(content: dict) -> tuple[bool, str]:
-    required_sections = ["brand", "hero", "menu", "footer"]
-    for section in required_sections:
-        if section not in content:
-            return False, f"Missing section: {section}"
-
-    menu_items = content.get("menu", {}).get("items", [])
-    if not isinstance(menu_items, list) or len(menu_items) == 0:
-        return False, "Menu must include at least one item"
-
-    for item in menu_items:
-        if not item.get("name"):
-            return False, "Each menu item requires a name"
-        if not item.get("price"):
-            return False, "Each menu item requires a price"
-
-    return True, "ok"
-
-
-def get_site_content() -> dict:
-    return read_json(CONTENT_PATH, load_default_content())
-
-
-def load_reservations() -> list:
-    return read_json(RESERVATIONS_PATH, [])
-
-
-def load_orders() -> list:
-    return read_json(ORDERS_PATH, [])
-
-
-def next_id(records: list) -> int:
-    if not records:
-        return 1
-    return max(int(record.get("id", 0)) for record in records) + 1
-
-
-def send_notification_email(subject: str, body: str) -> None:
-    smtp_host = os.getenv("SMTP_HOST")
-    smtp_user = os.getenv("SMTP_USER")
-    smtp_password = os.getenv("SMTP_PASSWORD")
-    smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    smtp_to = os.getenv("NOTIFY_TO_EMAIL")
-    smtp_from = os.getenv("NOTIFY_FROM_EMAIL", smtp_user or "")
-
-    if not all([smtp_host, smtp_user, smtp_password, smtp_to, smtp_from]):
-        return
-
-    message = EmailMessage()
-    message["Subject"] = subject
-    message["From"] = smtp_from
-    message["To"] = smtp_to
-    message.set_content(body)
-
-    with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as smtp:
-        smtp.starttls()
-        smtp.login(smtp_user, smtp_password)
-        smtp.send_message(message)
-
-
-def is_admin_authenticated() -> bool:
-    return bool(session.get("admin_authenticated"))
-
-
-def admin_required(route_handler):
-    @wraps(route_handler)
-    def wrapped(*args, **kwargs):
-        if not is_admin_authenticated():
-            return redirect(url_for("admin_login"))
-        return route_handler(*args, **kwargs)
-
-    return wrapped
-
-
-def parse_request_payload() -> dict:
-    if request.is_json:
-        return request.get_json(silent=True) or {}
-    return request.form.to_dict()
-
-
-def parse_int(value, default: int = 0) -> int:
-    try:
-        return int(str(value).strip())
-    except (TypeError, ValueError):
-        return default
-
-
-def build_content_from_form(form_data) -> dict:
-    menu_count = max(0, min(parse_int(form_data.get("menu_count", "0")), 100))
-    video_count = max(0, min(parse_int(form_data.get("video_count", "0")), 50))
-
-    hero_stats = []
-    for index in range(3):
-        value = form_data.get(f"hero_stat_value_{index}", "").strip()
-        label = form_data.get(f"hero_stat_label_{index}", "").strip()
-        if value or label:
-            hero_stats.append({"value": value, "label": label})
-
-    menu_items = []
-    for index in range(menu_count):
-        name = form_data.get(f"menu_name_{index}", "").strip()
-        description = form_data.get(f"menu_description_{index}", "").strip()
-        tag = form_data.get(f"menu_tag_{index}", "").strip()
-        price = form_data.get(f"menu_price_{index}", "").strip()
-        image = form_data.get(f"menu_image_{index}", "").strip()
-        alt = form_data.get(f"menu_alt_{index}", "").strip()
-        if not any([name, description, tag, price, image, alt]):
-            continue
-
-        menu_items.append(
-            {
-                "name": name,
-                "description": description,
-                "tag": tag,
-                "price": price,
-                "image": image,
-                "alt": alt or name,
-            }
+def init_db():
+    conn = get_db()
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS menu_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            category TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT NOT NULL,
+            price TEXT NOT NULL,
+            image_url TEXT NOT NULL
         )
+        """
+    )
+    conn.commit()
 
-    videos = []
-    for index in range(video_count):
-        title = form_data.get(f"video_title_{index}", "").strip()
-        description = form_data.get(f"video_description_{index}", "").strip()
-        video = form_data.get(f"video_file_{index}", "").strip()
-        poster = form_data.get(f"video_poster_{index}", "").strip()
-        if not any([title, description, video, poster]):
-            continue
-        videos.append(
-            {
-                "title": title,
-                "description": description,
-                "video": video,
-                "poster": poster,
-            }
+    count = conn.execute("SELECT COUNT(*) FROM menu_items").fetchone()[0]
+    if count == 0:
+        seed_items = [
+            (
+                "Starters",
+                "Seared Scallops",
+                "Citrus beurre blanc, fennel pollen",
+                "$16",
+                "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80",
+            ),
+            (
+                "Starters",
+                "Heirloom Salad",
+                "Burrata, basil oil, aged balsamic",
+                "$12",
+                "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=800&q=80",
+            ),
+            (
+                "Starters",
+                "Truffle Tagliolini",
+                "Black truffle, parmesan crema",
+                "$18",
+                "https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?auto=format&fit=crop&w=800&q=80",
+            ),
+            (
+                "Main Course",
+                "Butter-Poached Chicken",
+                "Wild mushroom jus, thyme",
+                "$24",
+                "https://images.unsplash.com/photo-1600891964599-f61ba0e24092?auto=format&fit=crop&w=800&q=80",
+            ),
+            (
+                "Main Course",
+                "Pan-Seared Sea Bass",
+                "Saffron risotto, lemon zest",
+                "$29",
+                "https://images.unsplash.com/photo-1553621042-f6e147245754?auto=format&fit=crop&w=800&q=80",
+            ),
+            (
+                "Main Course",
+                "Wagyu Steak",
+                "Truffle potato puree, jus",
+                "$38",
+                "https://images.unsplash.com/photo-1604908554149-6d5f6a1d1b94?auto=format&fit=crop&w=800&q=80",
+            ),
+            (
+                "Main Course",
+                "Braised Short Rib",
+                "Celery root, red wine glaze",
+                "$32",
+                "https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&w=800&q=80",
+            ),
+            (
+                "Main Course",
+                "Wild Mushroom Risotto",
+                "Porcini, aged pecorino",
+                "$22",
+                "https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=800&q=80",
+            ),
+            (
+                "Desserts",
+                "Chocolate Souffle",
+                "Madagascar vanilla, cacao nibs",
+                "$12",
+                "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=800&q=80",
+            ),
+            (
+                "Desserts",
+                "Citrus Tart",
+                "Lemon curd, candied peel",
+                "$11",
+                "https://images.unsplash.com/photo-1481931098730-318b6f776db0?auto=format&fit=crop&w=800&q=80",
+            ),
+            (
+                "Desserts",
+                "Berry Parfait",
+                "Mascarpone, mint, berry compote",
+                "$10",
+                "https://images.unsplash.com/photo-1505253758473-96b7015fcd40?auto=format&fit=crop&w=800&q=80",
+            ),
+        ]
+        conn.executemany(
+            """
+            INSERT INTO menu_items (category, name, description, price, image_url)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            seed_items,
         )
-
-    footer_hours = []
-    hour_1 = form_data.get("footer_hours_1", "").strip()
-    hour_2 = form_data.get("footer_hours_2", "").strip()
-    if hour_1:
-        footer_hours.append(hour_1)
-    if hour_2:
-        footer_hours.append(hour_2)
-
-    return {
-        "brand": {
-            "name": form_data.get("brand_name", "").strip(),
-            "email": form_data.get("brand_email", "").strip(),
-            "phone": form_data.get("brand_phone", "").strip(),
-            "address": form_data.get("brand_address", "").strip(),
-        },
-        "hero": {
-            "eyebrow": form_data.get("hero_eyebrow", "").strip(),
-            "title": form_data.get("hero_title", "").strip(),
-            "description": form_data.get("hero_description", "").strip(),
-            "video": form_data.get("hero_video", "").strip(),
-            "poster": form_data.get("hero_poster", "").strip(),
-            "caption": form_data.get("hero_caption", "").strip(),
-            "stats": hero_stats,
-        },
-        "about": {
-            "eyebrow": form_data.get("about_eyebrow", "").strip(),
-            "title": form_data.get("about_title", "").strip(),
-            "description": form_data.get("about_description", "").strip(),
-            "image": form_data.get("about_image", "").strip(),
-            "badge": form_data.get("about_badge", "").strip(),
-        },
-        "menu": {
-            "eyebrow": form_data.get("menu_eyebrow", "").strip(),
-            "title": form_data.get("menu_title", "").strip(),
-            "items": menu_items,
-        },
-        "videos": videos,
-        "booking": {
-            "title": form_data.get("booking_title", "").strip(),
-            "description": form_data.get("booking_description", "").strip(),
-        },
-        "ordering": {
-            "title": form_data.get("ordering_title", "").strip(),
-            "description": form_data.get("ordering_description", "").strip(),
-        },
-        "footer": {
-            "tagline": form_data.get("footer_tagline", "").strip(),
-            "hours": footer_hours,
-            "social": form_data.get("footer_social", "").strip(),
-        },
-    }
+        conn.commit()
+    conn.close()
 
 
-@app.get("/api/content")
-def api_content() -> tuple:
-    return jsonify(get_site_content()), 200
+def fetch_menu_items():
+    conn = get_db()
+    rows = conn.execute(
+        "SELECT id, category, name, description, price, image_url FROM menu_items ORDER BY id ASC"
+    ).fetchall()
+    conn.close()
+    return rows
 
 
-@app.post("/api/reservations")
-def api_create_reservation() -> tuple:
-    payload = parse_request_payload()
+def group_menu_items(rows):
+    categories = ["Starters", "Main Course", "Desserts"]
+    grouped = {category: [] for category in categories}
+    for row in rows:
+        grouped.setdefault(row["category"], []).append(row)
+    return grouped, categories
 
-    required_fields = ["full_name", "email", "phone", "reservation_date", "reservation_time", "guests"]
-    for field in required_fields:
-        if not str(payload.get(field, "")).strip():
-            return jsonify({"ok": False, "message": f"Missing required field: {field}"}), 400
 
-    try:
-        with write_lock:
-            reservations = load_reservations()
-            reservation = {
-                "id": next_id(reservations),
-                "full_name": payload["full_name"].strip(),
-                "email": payload["email"].strip(),
-                "phone": payload["phone"].strip(),
-                "reservation_date": payload["reservation_date"].strip(),
-                "reservation_time": payload["reservation_time"].strip(),
-                "guests": str(payload["guests"]).strip(),
-                "occasion": payload.get("occasion", "").strip(),
-                "notes": payload.get("notes", "").strip(),
-                "status": "new",
-                "created_at": utc_now_iso(),
-            }
-            reservations.append(reservation)
-            write_json(RESERVATIONS_PATH, reservations)
-    except OSError:
-        return jsonify({"ok": False, "message": "Unable to save reservation right now. Please try again."}), 500
-
-    email_body = (
-        "New reservation request\n\n"
-        f"Name: {reservation['full_name']}\n"
-        f"Email: {reservation['email']}\n"
-        f"Phone: {reservation['phone']}\n"
-        f"Date: {reservation['reservation_date']}\n"
-        f"Time: {reservation['reservation_time']}\n"
-        f"Guests: {reservation['guests']}\n"
-        f"Occasion: {reservation['occasion']}\n"
-        f"Notes: {reservation['notes']}\n"
+def whatsapp_link(item):
+    number = os.environ.get("WHATSAPP_NUMBER", "15550162419")
+    message = (
+        f"Hello LuxuryDine, I'd like to order {item['name']} "
+        f"({item['price']})."
     )
-    send_notification_email("New reservation request", email_body)
+    text = urllib.parse.quote_plus(message)
+    return f"https://wa.me/{number}?text={text}"
 
-    return jsonify({"ok": True, "message": "Reservation request received."}), 201
+
+def require_admin():
+    return session.get("is_admin") is True
 
 
-@app.post("/api/orders")
-def api_create_order() -> tuple:
-    payload = parse_request_payload()
+@app.context_processor
+def inject_globals():
+    return {"whatsapp_link": whatsapp_link}
 
-    required_fields = ["full_name", "phone", "pickup_time", "order_details"]
-    for field in required_fields:
-        if not str(payload.get(field, "")).strip():
-            return jsonify({"ok": False, "message": f"Missing required field: {field}"}), 400
 
-    try:
-        with write_lock:
-            orders = load_orders()
-            order = {
-                "id": next_id(orders),
-                "full_name": payload["full_name"].strip(),
-                "email": payload.get("email", "").strip(),
-                "phone": payload["phone"].strip(),
-                "pickup_time": payload["pickup_time"].strip(),
-                "order_details": payload["order_details"].strip(),
-                "notes": payload.get("notes", "").strip(),
-                "status": "new",
-                "created_at": utc_now_iso(),
-            }
-            orders.append(order)
-            write_json(ORDERS_PATH, orders)
-    except OSError:
-        return jsonify({"ok": False, "message": "Unable to save order right now. Please try again."}), 500
+init_db()
 
-    email_body = (
-        "New order request\n\n"
-        f"Name: {order['full_name']}\n"
-        f"Email: {order['email']}\n"
-        f"Phone: {order['phone']}\n"
-        f"Pickup time: {order['pickup_time']}\n"
-        f"Order details: {order['order_details']}\n"
-        f"Notes: {order['notes']}\n"
+@app.route("/")
+def home():
+    return render_template("home.html", title="Home")
+
+@app.route("/menu")
+def menu():
+    items = fetch_menu_items()
+    grouped_items, categories = group_menu_items(items)
+    return render_template(
+        "menu.html",
+        title="Menu",
+        grouped_items=grouped_items,
+        categories=categories,
     )
-    send_notification_email("New pickup order", email_body)
 
-    return jsonify({"ok": True, "message": "Order request received."}), 201
+@app.route("/contact")
+def contact():
+    return render_template("contact.html", title="Contact")
 
+@app.route("/about")
+def about():
+    return render_template("about.html", title="About")
 
-@app.route("/admin/login", methods=["GET", "POST"])
+@app.route("/gallery")
+def gallery():
+    return render_template("gallery.html", title="Gallery")
+
+@app.route("/events")
+def events():
+    return render_template("events.html", title="Events")
+
+@app.route("/private-dining")
+def private_dining():
+    return render_template("private_dining.html", title="Private Dining")
+
+@app.route("/admin", methods=["GET", "POST"])
 def admin_login():
-    if is_admin_authenticated():
-        return redirect(url_for("admin_panel"))
-
     if request.method == "POST":
-        submitted_password = request.form.get("password", "")
-        expected_password = os.getenv("ADMIN_PASSWORD", "change-this-admin-password")
-
-        if submitted_password and submitted_password == expected_password:
-            session["admin_authenticated"] = True
-            return redirect(url_for("admin_panel"))
-
-        flash("Invalid password", "error")
-
-    return render_template("admin_login.html")
+        password = request.form.get("password", "")
+        expected = os.environ.get("ADMIN_PASSWORD")
+        if expected and password == expected:
+            session["is_admin"] = True
+            return redirect(url_for("admin_menu"))
+        flash("Invalid admin password.")
+    return render_template("admin_login.html", title="Admin Login")
 
 
-@app.get("/admin/logout")
+@app.route("/admin/logout")
 def admin_logout():
-    session.clear()
+    session.pop("is_admin", None)
+    flash("Logged out.")
     return redirect(url_for("admin_login"))
 
 
-@app.get("/admin")
-@admin_required
-def admin_panel():
-    content = get_site_content()
-    reservations = sorted(load_reservations(), key=lambda row: row.get("created_at", ""), reverse=True)[:200]
-    orders = sorted(load_orders(), key=lambda row: row.get("created_at", ""), reverse=True)[:200]
+@app.route("/admin/menu", methods=["GET", "POST"])
+def admin_menu():
+    if not require_admin():
+        return redirect(url_for("admin_login"))
 
+    if request.method == "POST":
+        action = request.form.get("action")
+        conn = get_db()
+        if action == "add":
+            conn.execute(
+                """
+                INSERT INTO menu_items (category, name, description, price, image_url)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    request.form.get("category", "Starters").strip(),
+                    request.form.get("name", "").strip(),
+                    request.form.get("description", "").strip(),
+                    request.form.get("price", "").strip(),
+                    request.form.get("image_url", "").strip(),
+                ),
+            )
+            conn.commit()
+            flash("Menu item added.")
+        elif action == "update":
+            conn.execute(
+                """
+                UPDATE menu_items
+                SET category = ?, name = ?, description = ?, price = ?, image_url = ?
+                WHERE id = ?
+                """,
+                (
+                    request.form.get("category", "").strip(),
+                    request.form.get("name", "").strip(),
+                    request.form.get("description", "").strip(),
+                    request.form.get("price", "").strip(),
+                    request.form.get("image_url", "").strip(),
+                    request.form.get("id"),
+                ),
+            )
+            conn.commit()
+            flash("Menu item updated.")
+        elif action == "delete":
+            conn.execute("DELETE FROM menu_items WHERE id = ?", (request.form.get("id"),))
+            conn.commit()
+            flash("Menu item deleted.")
+        conn.close()
+        return redirect(url_for("admin_menu"))
+
+    items = fetch_menu_items()
+    grouped_items, categories = group_menu_items(items)
     return render_template(
-        "admin_panel.html",
-        content=content,
-        reservations=reservations,
-        orders=orders,
+        "admin_menu.html",
+        title="Admin Menu",
+        items=items,
+        categories=categories,
+        grouped_items=grouped_items,
     )
 
+@app.route("/reserve", methods=["POST"])
+def reserve():
+    name = request.form.get("name", "").strip()
+    phone = request.form.get("phone", "").strip()
+    date = request.form.get("date", "").strip()
+    time = request.form.get("time", "").strip()
 
-@app.post("/admin/content-form")
-@admin_required
-def admin_update_content_form():
-    parsed_content = build_content_from_form(request.form)
+    if not all([name, phone, date, time]):
+        flash("Please fill in all reservation fields.")
+        return redirect(url_for("home"))
 
-    is_valid, message = validate_content(parsed_content)
-    if not is_valid:
-        flash(message, "error")
-        return redirect(url_for("admin_panel"))
+    smtp_user = os.environ.get("SMTP_USER")
+    smtp_pass = os.environ.get("SMTP_PASS")
+    to_email = os.environ.get("SMTP_TO", "jhapriyanshu107@gmail.com")
 
-    with write_lock:
-        write_json(CONTENT_PATH, parsed_content)
+    if not smtp_user or not smtp_pass:
+        flash("Reservation email is not configured. Please set SMTP_USER and SMTP_PASS.")
+        return redirect(url_for("home"))
 
-    flash("Website content updated", "success")
-    return redirect(url_for("admin_panel"))
-
-
-@app.post("/admin/content")
-@admin_required
-def admin_update_content():
-    content_raw = request.form.get("content_json", "")
-    if not content_raw.strip():
-        flash("Content JSON cannot be empty", "error")
-        return redirect(url_for("admin_panel"))
+    msg = EmailMessage()
+    msg["Subject"] = f"New Reservation — {name}"
+    msg["From"] = smtp_user
+    msg["To"] = to_email
+    msg.set_content(
+        "LuxuryDine Reservation\n"
+        f"Name: {name}\n"
+        f"Phone: {phone}\n"
+        f"Date: {date}\n"
+        f"Time: {time}\n"
+    )
 
     try:
-        parsed_content = json.loads(content_raw)
-    except json.JSONDecodeError as error:
-        flash(f"Invalid JSON: {error.msg}", "error")
-        return redirect(url_for("admin_panel"))
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+            smtp.login(smtp_user, smtp_pass)
+            smtp.send_message(msg)
+        flash("Reservation sent successfully. We'll confirm shortly.")
+    except Exception:
+        flash("Something went wrong while sending your reservation. Please try again.")
 
-    is_valid, message = validate_content(parsed_content)
-    if not is_valid:
-        flash(message, "error")
-        return redirect(url_for("admin_panel"))
-
-    with write_lock:
-        write_json(CONTENT_PATH, parsed_content)
-
-    flash("Website content updated", "success")
-    return redirect(url_for("admin_panel"))
-
-
-@app.post("/admin/reservations/<int:reservation_id>/status")
-@admin_required
-def admin_update_reservation_status(reservation_id: int):
-    status = request.form.get("status", "new").strip().lower()
-    allowed = {"new", "confirmed", "completed", "cancelled"}
-    if status not in allowed:
-        flash("Invalid reservation status", "error")
-        return redirect(url_for("admin_panel"))
-
-    updated = False
-    with write_lock:
-        reservations = load_reservations()
-        for row in reservations:
-            if int(row.get("id", 0)) == reservation_id:
-                row["status"] = status
-                updated = True
-                break
-        if updated:
-            write_json(RESERVATIONS_PATH, reservations)
-
-    if updated:
-        flash("Reservation status updated", "success")
-    else:
-        flash("Reservation not found", "error")
-
-    return redirect(url_for("admin_panel"))
-
-
-@app.post("/admin/orders/<int:order_id>/status")
-@admin_required
-def admin_update_order_status(order_id: int):
-    status = request.form.get("status", "new").strip().lower()
-    allowed = {"new", "accepted", "preparing", "ready", "completed", "cancelled"}
-    if status not in allowed:
-        flash("Invalid order status", "error")
-        return redirect(url_for("admin_panel"))
-
-    updated = False
-    with write_lock:
-        orders = load_orders()
-        for row in orders:
-            if int(row.get("id", 0)) == order_id:
-                row["status"] = status
-                updated = True
-                break
-        if updated:
-            write_json(ORDERS_PATH, orders)
-
-    if updated:
-        flash("Order status updated", "success")
-    else:
-        flash("Order not found", "error")
-
-    return redirect(url_for("admin_panel"))
-
-
-@app.get("/")
-def index():
-    return send_from_directory(app.static_folder, "index.html")
-
-
-@app.get("/<path:path>")
-def static_files(path: str):
-    candidate = (SITE_DIR / path).resolve()
-    if SITE_DIR not in candidate.parents and candidate != SITE_DIR:
-        abort(404)
-
-    if candidate.is_file():
-        return send_from_directory(app.static_folder, path)
-
-    abort(404)
-
-
-@app.errorhandler(404)
-def handle_404(_error):
-    if request.path.startswith("/api/"):
-        return jsonify({"ok": False, "message": "API endpoint not found"}), 404
-    return ("Not Found", 404)
-
-
-@app.errorhandler(405)
-def handle_405(_error):
-    if request.path.startswith("/api/"):
-        return jsonify({"ok": False, "message": "Method not allowed"}), 405
-    return ("Method Not Allowed", 405)
-
-
-@app.errorhandler(500)
-def handle_500(_error):
-    if request.path.startswith("/api/"):
-        return jsonify({"ok": False, "message": "Internal server error"}), 500
-    return ("Internal Server Error", 500)
-
-
-init_storage()
+    return redirect(url_for("home"))
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)
