@@ -596,9 +596,15 @@
               Missing SMTP env vars: {{ email_missing | join(', ') }}
             </p>
           {% endif %}
-          <form method="post" action="{{ url_for('admin_email_test') }}">
-            <button type="submit">Send Test Email</button>
-          </form>
+          <p>No shell required: run network check and test email from here.</p>
+          <div class="actions">
+            <form method="post" action="{{ url_for('admin_smtp_check') }}">
+              <button type="submit" class="btn-secondary">Check SMTP Network</button>
+            </form>
+            <form method="post" action="{{ url_for('admin_email_test') }}">
+              <button type="submit">Send Test Email</button>
+            </form>
+          </div>
         </div>
 
         <div class="panel" style="margin-bottom: 16px;">

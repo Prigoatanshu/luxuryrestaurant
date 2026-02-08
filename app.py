@@ -1,6 +1,7 @@
 import json
 import os
 import smtplib
+import socket
 import threading
 from datetime import datetime, timezone
 from email.message import EmailMessage
@@ -174,6 +175,36 @@ def smtp_config() -> tuple[dict[str, str | int | bool], list[str], str | None]:
         missing.append("NOTIFY_FROM_EMAIL")
 
     return config, missing, None
+
+
+def smtp_network_diagnostics() -> tuple[bool, str]:
+    config, _missing, config_error = smtp_config()
+    if config_error:
+        return False, config_error
+
+    host = str(config.get("host", "")).strip()
+    port = int(config.get("port", 0))
+    if not host:
+        return False, "SMTP_HOST is empty"
+    if port <= 0:
+        return False, f"Invalid SMTP port: {port}"
+
+    try:
+        addr_info = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+    except socket.gaierror as error:
+        return False, f"DNS failed for {host}:{port}: {error}"
+
+    resolved = sorted({row[4][0] for row in addr_info if row and row[4]})
+    resolved_text = ", ".join(resolved[:3]) if resolved else "unknown"
+
+    try:
+        with socket.create_connection((host, port), timeout=10):
+            pass
+    except OSError as error:
+        return False, f"TCP connect failed for {host}:{port}: {error}"
+
+    mode = "SSL" if config["use_ssl"] else ("TLS" if config["use_tls"] else "plain")
+    return True, f"SMTP network OK ({host}:{port}, mode={mode}, resolved={resolved_text})"
 
 
 def log_smtp_diagnostics() -> None:
@@ -619,6 +650,14 @@ def admin_email_test():
     else:
         flash(f"SMTP test failed: {error}", "error")
 
+    return redirect(url_for("admin_panel"))
+
+
+@app.post("/admin/smtp-check")
+@admin_required
+def admin_smtp_check():
+    ok, message = smtp_network_diagnostics()
+    flash(message, "success" if ok else "error")
     return redirect(url_for("admin_panel"))
 
 
