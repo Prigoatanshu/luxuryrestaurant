@@ -3,6 +3,8 @@ import os
 import smtplib
 import socket
 import threading
+import urllib.error
+import urllib.request
 from datetime import datetime, timezone
 from email.message import EmailMessage
 from functools import wraps
@@ -136,6 +138,13 @@ def parse_env_bool(name: str, default: bool = False) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
+def email_provider_mode() -> str:
+    mode = os.getenv("EMAIL_PROVIDER", "auto").strip().lower()
+    if mode in {"smtp", "resend", "auto"}:
+        return mode
+    return "auto"
+
+
 def smtp_config() -> tuple[dict[str, str | int | bool], list[str], str | None]:
     smtp_host = os.getenv("SMTP_HOST", "").strip()
     smtp_user = os.getenv("SMTP_USER", "").strip()
@@ -177,10 +186,50 @@ def smtp_config() -> tuple[dict[str, str | int | bool], list[str], str | None]:
     return config, missing, None
 
 
-def smtp_network_diagnostics() -> tuple[bool, str]:
-    config, _missing, config_error = smtp_config()
+def resend_config() -> tuple[dict[str, str], list[str]]:
+    resend_api_key = os.getenv("RESEND_API_KEY", "").strip()
+    resend_from = os.getenv("RESEND_FROM_EMAIL", os.getenv("NOTIFY_FROM_EMAIL", "")).strip()
+    resend_to = os.getenv("NOTIFY_TO_EMAIL", "").strip()
+
+    config = {
+        "api_key": resend_api_key,
+        "from": resend_from,
+        "to": resend_to,
+    }
+
+    missing = []
+    if not resend_api_key:
+        missing.append("RESEND_API_KEY")
+    if not resend_from:
+        missing.append("RESEND_FROM_EMAIL")
+    if not resend_to:
+        missing.append("NOTIFY_TO_EMAIL")
+
+    return config, missing
+
+
+def smtp_status() -> tuple[bool, str]:
+    _config, missing, config_error = smtp_config()
     if config_error:
         return False, config_error
+    if missing:
+        return False, f"Missing SMTP env vars: {', '.join(missing)}"
+    return True, ""
+
+
+def resend_status() -> tuple[bool, str]:
+    _config, missing = resend_config()
+    if missing:
+        return False, f"Missing Resend env vars: {', '.join(missing)}"
+    return True, ""
+
+
+def smtp_network_diagnostics() -> tuple[bool, str]:
+    config, missing, config_error = smtp_config()
+    if config_error:
+        return False, config_error
+    if missing:
+        return False, f"Missing SMTP env vars: {', '.join(missing)}"
 
     host = str(config.get("host", "")).strip()
     port = int(config.get("port", 0))
@@ -197,41 +246,29 @@ def smtp_network_diagnostics() -> tuple[bool, str]:
     resolved = sorted({row[4][0] for row in addr_info if row and row[4]})
     resolved_text = ", ".join(resolved[:3]) if resolved else "unknown"
 
-    try:
-        with socket.create_connection((host, port), timeout=10):
-            pass
-    except OSError as error:
-        return False, f"TCP connect failed for {host}:{port}: {error}"
+    connected_ip = ""
+    last_error = None
+    for row in addr_info:
+        sockaddr = row[4]
+        if not sockaddr:
+            continue
+        try:
+            with socket.create_connection(sockaddr, timeout=10):
+                connected_ip = str(sockaddr[0])
+                break
+        except OSError as error:
+            last_error = error
+
+    if not connected_ip:
+        if last_error:
+            return False, f"TCP connect failed for {host}:{port}: {last_error}"
+        return False, f"TCP connect failed for {host}:{port}"
 
     mode = "SSL" if config["use_ssl"] else ("TLS" if config["use_tls"] else "plain")
-    return True, f"SMTP network OK ({host}:{port}, mode={mode}, resolved={resolved_text})"
+    return True, f"SMTP network OK ({host}:{port}, mode={mode}, resolved={resolved_text}, connected={connected_ip})"
 
 
-def log_smtp_diagnostics() -> None:
-    config, missing, config_error = smtp_config()
-    if config_error:
-        app.logger.warning("Email notifications disabled: %s", config_error)
-        return
-
-    if missing:
-        app.logger.warning(
-            "Email notifications disabled. Missing env vars: %s",
-            ", ".join(missing),
-        )
-        return
-
-    mode = "SSL" if config["use_ssl"] else ("TLS" if config["use_tls"] else "plain")
-    app.logger.info(
-        "Email notifications enabled. host=%s port=%s mode=%s to=%s from=%s",
-        config["host"],
-        config["port"],
-        mode,
-        config["to"],
-        config["from"],
-    )
-
-
-def send_notification_email(subject: str, body: str) -> tuple[bool, str]:
+def send_smtp_email(subject: str, body: str) -> tuple[bool, str]:
     config, missing, config_error = smtp_config()
     if config_error:
         return False, config_error
@@ -266,10 +303,142 @@ def send_notification_email(subject: str, body: str) -> tuple[bool, str]:
     return True, ""
 
 
+def send_resend_email(subject: str, body: str) -> tuple[bool, str]:
+    config, missing = resend_config()
+    if missing:
+        return False, f"Missing Resend env vars: {', '.join(missing)}"
+
+    payload = {
+        "from": config["from"],
+        "to": [config["to"]],
+        "subject": subject,
+        "text": body,
+    }
+    request_data = json.dumps(payload).encode("utf-8")
+    request_obj = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=request_data,
+        method="POST",
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {config['api_key']}",
+        },
+    )
+
+    try:
+        with urllib.request.urlopen(request_obj, timeout=20) as response:
+            if 200 <= response.status < 300:
+                return True, ""
+            response_body = response.read().decode("utf-8", errors="ignore")
+            return False, f"Resend API HTTP {response.status}: {response_body[:200]}"
+    except urllib.error.HTTPError as error:
+        response_body = error.read().decode("utf-8", errors="ignore")
+        return False, f"Resend API HTTP {error.code}: {response_body[:200]}"
+    except Exception as error:
+        app.logger.exception("Failed to send notification email via Resend")
+        return False, str(error)
+
+
+def send_notification_email(subject: str, body: str) -> tuple[bool, str]:
+    mode = email_provider_mode()
+    smtp_ready, smtp_error = smtp_status()
+    resend_ready, resend_error = resend_status()
+
+    if mode == "smtp":
+        if not smtp_ready:
+            return False, smtp_error
+        return send_smtp_email(subject, body)
+
+    if mode == "resend":
+        if not resend_ready:
+            return False, resend_error
+        return send_resend_email(subject, body)
+
+    if smtp_ready:
+        smtp_sent, smtp_send_error = send_smtp_email(subject, body)
+        if smtp_sent:
+            return True, ""
+        if resend_ready:
+            resend_sent, resend_send_error = send_resend_email(subject, body)
+            if resend_sent:
+                app.logger.warning("SMTP failed but Resend fallback succeeded: %s", smtp_send_error)
+                return True, ""
+            return False, f"SMTP failed ({smtp_send_error}); Resend failed ({resend_send_error})"
+        return False, smtp_send_error
+
+    if resend_ready:
+        return send_resend_email(subject, body)
+
+    errors = [err for err in [smtp_error, resend_error] if err]
+    return False, "No usable email provider configured. " + " | ".join(errors)
+
+
+def active_email_mode() -> str:
+    mode = email_provider_mode()
+    if mode in {"smtp", "resend"}:
+        return mode
+
+    smtp_ready, _smtp_error = smtp_status()
+    if smtp_ready:
+        return "smtp"
+
+    resend_ready, _resend_error = resend_status()
+    if resend_ready:
+        return "resend"
+
+    return "none"
+
+
+def log_email_diagnostics() -> None:
+    mode = active_email_mode()
+    if mode == "smtp":
+        config, _missing, _config_error = smtp_config()
+        transport = "SSL" if config["use_ssl"] else ("TLS" if config["use_tls"] else "plain")
+        app.logger.info(
+            "Email notifications enabled via SMTP. host=%s port=%s mode=%s to=%s from=%s",
+            config["host"],
+            config["port"],
+            transport,
+            config["to"],
+            config["from"],
+        )
+        return
+
+    if mode == "resend":
+        config, _missing = resend_config()
+        app.logger.info(
+            "Email notifications enabled via Resend API. to=%s from=%s",
+            config["to"],
+            config["from"],
+        )
+        return
+
+    smtp_ready, smtp_error = smtp_status()
+    resend_ready, resend_error = resend_status()
+    app.logger.warning(
+        "Email notifications disabled. SMTP(%s): %s | RESEND(%s): %s",
+        smtp_ready,
+        smtp_error,
+        resend_ready,
+        resend_error,
+    )
+
+
 def email_config_diagnostics() -> tuple[bool, list[str]]:
-    required = ["SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD", "NOTIFY_TO_EMAIL"]
-    missing = [name for name in required if not os.getenv(name)]
-    return (len(missing) == 0, missing)
+    mode = email_provider_mode()
+    smtp_ready, smtp_error = smtp_status()
+    resend_ready, resend_error = resend_status()
+
+    if mode == "smtp":
+        return smtp_ready, ([] if smtp_ready else [smtp_error])
+    if mode == "resend":
+        return resend_ready, ([] if resend_ready else [resend_error])
+
+    if smtp_ready or resend_ready:
+        return True, []
+
+    issues = [error for error in [smtp_error, resend_error] if error]
+    return False, issues
 
 
 def is_admin_authenticated() -> bool:
@@ -579,6 +748,7 @@ def admin_panel():
     reservations = sorted(load_reservations(), key=lambda row: row.get("created_at", ""), reverse=True)[:200]
     orders = sorted(load_orders(), key=lambda row: row.get("created_at", ""), reverse=True)[:200]
     email_ok, email_missing = email_config_diagnostics()
+    email_mode = active_email_mode()
 
     return render_template(
         "admin_panel.html",
@@ -587,6 +757,7 @@ def admin_panel():
         orders=orders,
         email_ok=email_ok,
         email_missing=email_missing,
+        email_mode=email_mode,
     )
 
 
@@ -638,7 +809,7 @@ def admin_update_content():
 def admin_email_test():
     email_ok, email_missing = email_config_diagnostics()
     if not email_ok:
-        flash(f"Missing SMTP env vars: {', '.join(email_missing)}", "error")
+        flash("Email configuration issue: " + " | ".join(email_missing), "error")
         return redirect(url_for("admin_panel"))
 
     sent, error = send_notification_email(
@@ -656,6 +827,10 @@ def admin_email_test():
 @app.post("/admin/smtp-check")
 @admin_required
 def admin_smtp_check():
+    if active_email_mode() == "resend":
+        flash("SMTP check skipped: active email mode is RESEND.", "success")
+        return redirect(url_for("admin_panel"))
+
     ok, message = smtp_network_diagnostics()
     flash(message, "success" if ok else "error")
     return redirect(url_for("admin_panel"))
@@ -763,7 +938,7 @@ def handle_500(_error):
 
 
 init_storage()
-log_smtp_diagnostics()
+log_email_diagnostics()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))

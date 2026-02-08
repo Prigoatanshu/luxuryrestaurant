@@ -590,13 +590,17 @@
         <div class="panel" style="margin-bottom: 16px;">
           <h2>Email Notifications</h2>
           {% if email_ok %}
-            <p style="color: #8ee0b2;">SMTP configuration is present.</p>
+            <p style="color: #8ee0b2;">Email configuration is present. Active mode: {{ email_mode|upper }}.</p>
           {% else %}
-            <p style="color: #ffb4b4;">
-              Missing SMTP env vars: {{ email_missing | join(', ') }}
-            </p>
+            {% for issue in email_missing %}
+              <p style="color: #ffb4b4;">{{ issue }}</p>
+            {% endfor %}
           {% endif %}
-          <p>No shell required: run network check and test email from here.</p>
+          <p>No shell required: run checks from here. On free Render, SMTP ports may be blocked.</p>
+          <p>
+            Free-plan setup: set <code>EMAIL_PROVIDER=resend</code>, <code>RESEND_API_KEY</code>,
+            <code>RESEND_FROM_EMAIL</code>, and <code>NOTIFY_TO_EMAIL</code>.
+          </p>
           <div class="actions">
             <form method="post" action="{{ url_for('admin_smtp_check') }}">
               <button type="submit" class="btn-secondary">Check SMTP Network</button>
@@ -662,7 +666,7 @@
                   </tr>
                 {% else %}
                   <tr>
-                    <td colspan="5">No reservations yet.</td>
+                    <td colspan="6">No reservations yet.</td>
                   </tr>
                 {% endfor %}
               </tbody>
@@ -722,7 +726,7 @@
                   </tr>
                 {% else %}
                   <tr>
-                    <td colspan="5">No orders yet.</td>
+                    <td colspan="6">No orders yet.</td>
                   </tr>
                 {% endfor %}
               </tbody>
